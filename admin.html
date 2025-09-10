@@ -55,15 +55,13 @@
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-  <!-- Firebase (Compat for simplicity here) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <div class="wrap">
     <div class="brandbar"><div class="branddot"></div><h1>एडमिन पैनल</h1></div>
-    <div class="subtitle">पुराने रिकॉर्ड लोड, कार्यक्रम-वाइज फ़िल्टर, कार्यालय/इवेंट अलग व्यू, थम्बनेल, माह/दिन के अनुसार काउंट, और ऑरेंज–व्हाइट थीम।</div>
+    <div class="subtitle">इवेंट deactivate होने पर भी एडमिन में पुरानी इवेंट एंट्री सुरक्षित; टॉप विज़िटर में Office व Event ब्रेकअप।</div>
 
     <div class="chips" style="margin-bottom:8px">
       <div class="chip active" data-type="">सभी विज़िटर</div>
@@ -106,7 +104,7 @@
           <button id="endEventBtn" class="btn danger">इवेंट Deactivate</button>
         </div>
       </div>
-      <div class="notice">वर्तमान Active: <b id="activeEventLabel">—</b>. इवेंट Deactivate होने पर केवल कार्यालय कारण दिखेंगे और डिफ़ॉल्ट फॉर्म लागू होगा।</div>
+      <div class="notice">नोट: **Deactivate** केवल फॉर्म में इवेंट नाम हटाएगा; **एडमिन में सभी पिछले इवेंट रिकार्ड बने रहेंगे।</div>
     </div>
 
     <div class="table-wrap">
@@ -131,7 +129,6 @@
         <span id="rowInfo" style="color:#666">(0–0 of 0)</span>
       </div>
       <div style="display:flex; gap:8px; align-items:center;flex-wrap:wrap">
-        <button id="loadOlderBtn" class="btn ghost">⬇️ पुराने रिकॉर्ड (1000)</button>
         <button id="loadAllBtn" class="btn ghost">⚡ सभी पुराने रिकॉर्ड</button>
         <button id="exportBtn" class="btn">Export CSV</button>
       </div>
@@ -139,7 +136,7 @@
 
     <div class="cards">
       <div class="card">
-        <h3>टॉप 10 विज़िटर</h3>
+        <h3>टॉप 10 विज़िटर (Office vs Event)</h3>
         <div id="top10Table"></div>
       </div>
       <div class="card">
@@ -169,7 +166,7 @@
 
   const $ = (id)=>document.getElementById(id);
 
-  // 5 निश्चित कार्यालय के कारण (dropdown)
+  // फिक्स्ड कार्यालय कारण
   const OFFICE_REASONS = [
     "कार्यालय पर बैठक",
     "जिला अध्यक्ष से भेंट",
@@ -191,7 +188,6 @@
     pageSize: 25,
     filtered: [],
     events: [],
-    activeEvent: null,
     viewType: "",
   };
 
@@ -211,19 +207,18 @@
     });
   }
 
+  // आने का कारण तय करें: इवेंट होने पर हमेशा इवेंट नाम दिखे (Active की शर्त हटाई)
   function computeDisplayReason(row){
-    const active = state.events.find(e=>e.active);
     const isOfficeReason = OFFICE_REASONS.includes(row.reason||"");
-    const rowHasEvent = !!(row.eventId || row.eventName || (!isOfficeReason && (row.reason||"").length>0));
+    const eventName = row.eventName || row.eventId || (!isOfficeReason ? (row.reason||"") : "");
+    if (eventName) return eventName; // इवेंट एंट्री—इतिहास बना रहे
+    if (isOfficeReason) return row.reason||"";
+    return "—";
+  }
 
-    // नियम:
-    // - Admin टेबल में "इवेंट" नाम का अलग कॉलम नहीं है
-    // - अगर Active Event है और पंक्ति इवेंट से संबंधित है, तो "आने का कारण" में सिर्फ Active Event का नाम दिखाएँ
-    // - अन्यथा, केवल 5 कार्यालय कारणों में से जो भी हो वही दिखाएँ, नहीं तो "—"
-    if (active && rowHasEvent){
-      return active.name || "इवेंट";
-    }
-    return isOfficeReason ? (row.reason||"") : "—";
+  function isEventRow(row){
+    const isOfficeReason = OFFICE_REASONS.includes(row.reason||"");
+    return !!(row.eventName || row.eventId || (!isOfficeReason && (row.reason||"")));
   }
 
   function applyFilter(){
@@ -231,20 +226,20 @@
     const fr = $('fromDate').value; const to = $('toDate').value;
     const rs = $('reasonSelect').value; const md = $('mandalSelect').value;
     const ev = $('eventSelect').value;
-    const fq = $('freqSelect').value;
+    const fq = $('freqSelect')?.value || '';
     const type = state.viewType;
 
     let rows = [...state.all];
 
     if (type === 'office'){
-      rows = rows.filter(r => (r.type || r.category || 'office') === 'office' || (r.reason||'').includes('कार्यालय'));
+      rows = rows.filter(r => !isEventRow(r));  // केवल कार्यालय
     } else if (type === 'event'){
-      rows = rows.filter(r => (r.type || r.category) === 'event' || r.eventId || r.eventName || (!OFFICE_REASONS.includes(r.reason||"")));
+      rows = rows.filter(r => isEventRow(r));   // केवल इवेंट
     }
 
     if (fr) { const s = new Date(fr + 'T00:00:00'); rows = rows.filter(r => r.timestamp?.toDate ? r.timestamp.toDate() >= s : true); }
     if (to) { const e = new Date(to + 'T23:59:59'); rows = rows.filter(r => r.timestamp?.toDate ? r.timestamp.toDate() <= e : true); }
-    if (rs) rows = rows.filter(r => (r.reason || '') === rs);
+    if (rs) rows = rows.filter(r => (r.reason || '') === rs); // केवल 5 ऑफिस कारण पर लागू
     if (md) rows = rows.filter(r => (r.mandal || '') === md);
     if (ev) rows = rows.filter(r => (r.eventId || r.eventName || '') === ev);
 
@@ -312,27 +307,33 @@
     $('rowInfo').textContent = `(${from}–${to} of ${total})`;
   }
 
+  // Top 10 with Office vs Event breakdown
   function renderTop10(){
     const map = new Map();
     state.filtered.forEach(r=>{
       const key = `${r.name||''}|${r.mobile||''}`;
-      map.set(key, (map.get(key)||0)+1);
+      if (!map.has(key)) map.set(key, {name:r.name||'(अनाम)', mobile:r.mobile||'', total:0, office:0, event:0});
+      const obj = map.get(key);
+      obj.total += 1;
+      if (isEventRow(r)) obj.event += 1; else obj.office += 1;
     });
-    const arr = [...map.entries()].map(([k,c])=>{
-      const [n,m] = k.split('|'); return { name:n||'(अनाम)', mobile:m||'', count:c };
-    }).sort((a,b)=>b.count-a.count).slice(0,10);
+    const arr = [...map.values()].sort((a,b)=>b.total-a.total).slice(0,10);
 
     const html = arr.length
       ? `<table style="width:100%;border-collapse:collapse">
            <thead><tr>
              <th style="text-align:left;padding:6px;border-bottom:1px solid #eee">नाम</th>
              <th style="text-align:left;padding:6px;border-bottom:1px solid #eee">मोबाइल</th>
-             <th style="text-align:left;padding:6px;border-bottom:1px solid #eee">कुल विज़िट</th>
+             <th style="text-align:left;padding:6px;border-bottom:1px solid #eee">कुल</th>
+             <th style="text-align:left;padding:6px;border-bottom:1px solid #eee">Office</th>
+             <th style="text-align:left;padding:6px;border-bottom:1px solid #eee">Event</th>
            </tr></thead>
            <tbody>${arr.map(x=>`<tr>
              <td style="padding:6px;border-bottom:1px solid #f5f5f5">${x.name}</td>
              <td style="padding:6px;border-bottom:1px solid #f5f5f5">${x.mobile}</td>
-             <td style="padding:6px;border-bottom:1px solid #f5f5f5"><b>${x.count}</b></td>
+             <td style="padding:6px;border-bottom:1px solid #f5f5f5"><b>${x.total}</b></td>
+             <td style="padding:6px;border-bottom:1px solid #f5f5f5">${x.office}</td>
+             <td style="padding:6px;border-bottom:1px solid #f5f5f5">${x.event}</td>
            </tr>`).join('')}</tbody>
          </table>`
       : '—';
@@ -340,7 +341,6 @@
   }
 
   function renderMonthAndDateTables(){
-    // Month-wise table over all filtered rows
     const byMonth = new Map();
     state.filtered.forEach(r=>{
       const d = r.timestamp?.toDate ? r.timestamp.toDate() : null;
@@ -356,7 +356,6 @@
          </table>`
       : '—';
 
-    // Date-wise table for selected month
     const mp = $('monthPicker').value;
     const byDate = new Map();
     state.filtered.forEach(r=>{
@@ -376,11 +375,6 @@
       : '—';
   }
 
-  function loadStaticFilters(){
-    fillSelect($('reasonSelect'), OFFICE_REASONS, '— सभी —'); // केवल 5 कार्यालय कारण
-    fillSelect($('mandalSelect'), MANDALS, '— सभी —');
-  }
-
   function renderEventsDropDowns(){
     const sel = $('eventSelect');
     sel.innerHTML = '<option value="">— सभी —</option>';
@@ -390,18 +384,11 @@
       op.textContent = ev.name + (ev.active ? ' (Active)' : '');
       sel.appendChild(op);
     });
-    const select = $('eventActiveSelect');
-    select.innerHTML = '<option value="">— इवेंट चुनें —</option>';
-    state.events.forEach(ev=>{
-      const op = document.createElement('option');
-      op.value = ev.id; op.textContent = ev.name + (ev.active ? ' (Active)' : '');
-      select.appendChild(op);
-    });
     const active = state.events.find(e => e.active);
-    $('activeEventLabel').textContent = active ? active.name : '—';
+    $('activeEventLabel') && ($('activeEventLabel').textContent = active ? active.name : '—');
   }
 
-  // Batch helpers for event active toggle
+  // Event mgmt helpers
   async function setOnlyThisActive(docId){
     const batch = db.batch();
     const all = await db.collection('events').get();
@@ -415,7 +402,7 @@
     await batch.commit();
   }
 
-  // Live latest
+  // Live latest first page
   db.collection("visitors").orderBy("timestamp","desc").limit(1000)
     .onSnapshot((snap) => {
       const latest = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -426,35 +413,7 @@
       applyFilter();
     });
 
-  // Load older single-page (1000)
-  $('loadOlderBtn').addEventListener('click', async ()=>{
-    await loadOlderOnce();
-  });
-
-  async function loadOlderOnce(){
-    try{
-      if (!state.lastDoc){
-        Swal.fire('ध्यान दें', 'और पुराने रिकॉर्ड लोड करने के लिए पहले कुछ डेटा दिखना चाहिए।', 'info');
-        return;
-      }
-      const q = db.collection("visitors").orderBy("timestamp","desc").startAfter(state.lastDoc).limit(1000);
-      const snap = await q.get();
-      const older = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      state.lastDoc = snap.docs[snap.docs.length-1] || state.lastDoc;
-      const map = new Map(state.all.map(r=>[r.id,r]));
-      older.forEach(r=>map.set(r.id,r));
-      state.all = [...map.values()].sort((a,b)=> (b.timestamp?.toMillis?.()||0) - (a.timestamp?.toMillis?.()||0));
-      applyFilter();
-      if (!older.length){
-        Swal.fire('रिकॉर्ड पूर्ण', 'और पुराने रिकॉर्ड उपलब्ध नहीं हैं।', 'info');
-      }
-    }catch(err){
-      console.error(err);
-      Swal.fire('Error', 'पुराने रिकॉर्ड लाने में समस्या आई।', 'error');
-    }
-  }
-
-  // Load ALL older (loop until empty) — ताकि 1200-1500 जैसी पूरी हिस्ट्री आ जाए
+  // Load ALL older (loop)
   $('loadAllBtn').addEventListener('click', async ()=>{
     let added = 0;
     try{
@@ -474,7 +433,7 @@
         state.all = [...map.values()].sort((a,b)=> (b.timestamp?.toMillis?.()||0) - (a.timestamp?.toMillis?.()||0));
         added += (state.all.length - before);
         applyFilter();
-        if (older.length < 1000) break; // last page
+        if (older.length < 1000) break;
       }
       Swal.fire('पूर्ण', `लोड हो गया। जोड़े गए रिकॉर्ड: ${added}`, 'success');
     }catch(err){
@@ -483,14 +442,14 @@
     }
   });
 
-  // live events
+  // live events for dropdowns
   db.collection('events').orderBy('createdAt','desc').onSnapshot(s=>{
     state.events = s.docs.map(d=>({ id: d.id, ...d.data() }));
     renderEventsDropDowns();
-    applyFilter(); // reason-render depends on active event
+    applyFilter();
   });
 
-  // UI actions
+  // UI wireup
   document.querySelectorAll('.chip').forEach(el=>el.addEventListener('click',()=>{
     document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
     el.classList.add('active');
@@ -499,36 +458,33 @@
     applyFilter();
   }));
 
-  $('fromDate').addEventListener('change', applyFilter);
-  $('toDate').addEventListener('change', applyFilter);
-  $('reasonSelect').addEventListener('change', applyFilter);
-  $('mandalSelect').addEventListener('change', applyFilter);
-  $('eventSelect').addEventListener('change', applyFilter);
-  $('freqSelect').addEventListener('change', applyFilter);
+  ['fromDate','toDate','reasonSelect','mandalSelect','eventSelect','freqSelect','monthPicker'].forEach(id=>{
+    const el = $(id); el && el.addEventListener('change', applyFilter);
+  });
   $('searchInput').addEventListener('input', applyFilter);
 
   $('clearBtn').addEventListener('click', ()=>{
     $('fromDate').value=''; $('toDate').value=''; $('reasonSelect').value='';
-    $('mandalSelect').value=''; $('eventSelect').value=''; $('freqSelect').value='';
+    $('mandalSelect').value=''; $('eventSelect').value=''; $('freqSelect') && ($('freqSelect').value='');
     $('searchInput').value=''; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
     document.querySelector('[data-type=""]').classList.add('active'); state.viewType=''; $('activeTypeBadge').textContent='व्यू: सभी'; applyFilter();
   });
 
-  $('addEventBtn').addEventListener('click', async ()=>{
-    const name = ($('eventNameInput').value || '').trim();
+  $('addEventBtn')?.addEventListener('click', async ()=>{
+    const name = (document.getElementById('eventNameInput').value || '').trim();
     if (!name) return Swal.fire('नाम चाहिए', 'इवेंट का नाम दर्ज करें', 'warning');
     await db.collection('events').add({ name, active:false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-    $('eventNameInput').value='';
+    document.getElementById('eventNameInput').value='';
   });
-  $('setActiveBtn').addEventListener('click', async ()=>{
-    const id = $('eventActiveSelect').value;
+  $('setActiveBtn')?.addEventListener('click', async ()=>{
+    const id = document.getElementById('eventActiveSelect').value;
     if (!id) return;
     await setOnlyThisActive(id);
     Swal.fire('Done', 'यह इवेंट अब Active है', 'success');
   });
-  $('endEventBtn').addEventListener('click', async ()=>{
+  $('endEventBtn')?.addEventListener('click', async ()=>{
     await clearActive();
-    Swal.fire('Done', 'Active इवेंट हटाया गया — डिफ़ॉल्ट फॉर्म सक्रिय।', 'success');
+    Swal.fire('Done', 'इवेंट Deactivate — फॉर्म में इवेंट नाम नहीं दिखेगा।', 'success');
   });
 
   // export
@@ -553,7 +509,6 @@
   fillSelect($('reasonSelect'), OFFICE_REASONS, '— सभी —');
   fillSelect($('mandalSelect'), MANDALS, '— सभी —');
   (function initMonth(){ const d=new Date(); $('monthPicker').value = d.toISOString().slice(0,7); })();
-  $('monthPicker').addEventListener('change', renderMonthAndDateTables);
 </script>
 </body>
 </html>
