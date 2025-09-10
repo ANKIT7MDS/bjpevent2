@@ -3,185 +3,129 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin • Events & Visitors</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari&display=swap" rel="stylesheet">
-  <style>
-    *{box-sizing:border-box}
-    body{font-family:'Noto Sans Devanagari',system-ui,-apple-system,Arial,sans-serif;background:#f6f6f6;margin:0}
-    .container{max-width:1220px;margin:24px auto;background:#fff;padding:18px 18px 26px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
-    h1{margin:0 0 12px}
-    .row{display:grid;grid-template-columns:1fr 160px 140px;gap:10px}
-    input,button,select{padding:10px;border:1px solid #e4e6ef;border-radius:8px;font-size:15px}
-    .btn{background:#0d6efd;color:#fff;border:none;cursor:pointer;padding:10px 14px;border-radius:8px;font-weight:700}
-    .btn.danger{background:#dc2626}
-    .pill{padding:4px 8px;border-radius:999px;font-size:12px;background:#eef2ff;display:inline-block}
-    .muted{color:#6b7280;font-size:13px}
-    .grid{display:grid;grid-template-columns:1fr;gap:18px;margin-top:14px}
-    .card{border:1px solid #eee;border-radius:10px;padding:14px}
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:10px;border-bottom:1px solid #eee;text-align:left}
-    th{background:#fafafa;font-weight:800}
-    .topbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-  </style>
+  <title>Admin • Visitors & Events</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700;800&display=swap" rel="stylesheet">
 
-  <!-- Firebase -->
+  <!-- (Optional) अपनी admin.css जोड़ें—अगर नहीं चाहें तो हटा दें -->
+  <link rel="stylesheet" href="admin.css">
+
+  <!-- SweetAlert -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Firebase (Compat) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <style>
+    /* Minimal safe defaults (admin.css न मिले तो) */
+    body{font-family:'Noto Sans Devanagari',system-ui,-apple-system,Arial,sans-serif;background:#f6f6f6;margin:0}
+    .wrap{max-width:1220px;margin:24px auto;background:#fff;padding:18px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+    h1{margin:0 0 10px}
+    .filters{display:grid;grid-template-columns:repeat(6,minmax(140px,1fr));gap:10px}
+    .filters .cell{display:flex;flex-direction:column;gap:6px}
+    input,select,button{padding:10px;border:1px solid #e4e6ef;border-radius:8px;font-size:14px}
+    button.btn{background:#0d6efd;color:#fff;border:none;cursor:pointer}
+    button.btn.danger{background:#dc2626}
+    .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
+    th{background:#fafafa}
+    .foot{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:10px 0}
+    .empty{padding:16px;color:#777}
+    img.preview{height:40px;width:40px;object-fit:cover;border-radius:6px;cursor:pointer}
+    .cards{display:grid;grid-template-columns:1fr;gap:14px;margin-top:16px}
+    .card{border:1px solid #eee;border-radius:10px;padding:12px}
+  </style>
 </head>
 <body>
-  <div class="container">
+  <div class="wrap">
     <h1>एडमिन पैनल</h1>
 
-    <div class="grid">
-      <!-- Events Card -->
-      <div class="card">
-        <h3 style="margin:0 0 10px">इवेंट प्रबंधन</h3>
-        <div class="row">
-          <input id="eventName" placeholder="इवेंट का नाम">
-          <button id="btnAdd" class="btn">इवेंट जोड़ें</button>
-          <button id="btnClearActive" class="btn danger">Active हटाएँ</button>
-        </div>
-        <p class="muted" style="margin-top:6px">* एक समय में केवल एक इवेंट Active रखें।</p>
+    <!-- ===== Filters & Search ===== -->
+    <div class="filters" style="margin-bottom:12px">
+      <div class="cell"><label>From</label><input type="date" id="fromDate"></div>
+      <div class="cell"><label>To</label><input type="date" id="toDate"></div>
+      <div class="cell"><label>Reason</label><select id="reasonSelect"><option value="">— सभी —</option></select></div>
+      <div class="cell"><label>Mandal</label><select id="mandalSelect"><option value="">— सभी —</option></select></div>
+      <div class="cell"><label>Type</label>
+        <select id="visitorType">
+          <option value="all">All</option>
+          <option value="office">Office</option>
+          <option value="event">Event</option>
+        </select>
+      </div>
+      <div class="cell"><label>Event</label><select id="eventFilter"><option value="">— सभी इवेंट —</option></select></div>
+    </div>
+    <div class="toolbar">
+      <input id="searchInput" placeholder="नाम/मोबाइल/पते से खोजें" style="flex:1">
+      <button id="exportBtn" class="btn">Export CSV</button>
+      <button id="clearBtn" class="btn">♻️ Clear</button>
+    </div>
 
-        <div style="margin-top:12px;border:1px solid #eee;border-radius:10px;overflow:auto">
-          <table>
-            <thead><tr><th>नाम</th><th>स्थिति</th><th>कार्रवाई</th></tr></thead>
-            <tbody id="eventRows"></tbody>
-          </table>
+    <!-- ===== Event Management ===== -->
+    <div class="card">
+      <div class="toolbar" style="justify-content:space-between">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input id="eventNameInput" placeholder="इवेंट का नाम" style="min-width:240px">
+          <button id="addEventBtn" class="btn">इवेंट जोड़ें</button>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <label>Active:</label>
+          <select id="eventActiveSelect" style="min-width:220px"></select>
+          <button id="setActiveBtn" class="btn">Active करें</button>
+          <button id="endEventBtn" class="btn danger">Active हटाएँ</button>
         </div>
       </div>
+      <div style="margin-top:6px;color:#666">वर्तमान Active: <b id="activeEventLabel">—</b></div>
+    </div>
 
-      <!-- Visitors Card -->
+    <!-- ===== Table ===== -->
+    <div style="border:1px solid #eee;border-radius:10px;overflow:auto;margin-top:12px">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>समय</th><th>नाम</th><th>मोबाइल</th><th>पद</th><th>मंडल</th><th>कारण</th><th>पता</th><th>सेल्फी</th><th>क्रिया</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div id="emptyState" class="empty" style="display:none">कोई डेटा नहीं मिला…</div>
+    </div>
+
+    <!-- ===== Pagination ===== -->
+    <div class="foot">
+      <div style="display:flex; gap:8px; align-items:center">
+        <button id="firstPage" class="btn">⏮</button>
+        <button id="prevPage" class="btn">◀</button>
+        <span id="pageInfo">Page 1 / 1</span>
+        <button id="nextPage" class="btn">▶</button>
+        <button id="lastPage" class="btn">⏭</button>
+        <span id="rowInfo" style="color:#666">(0–0 of 0)</span>
+      </div>
+    </div>
+
+    <!-- ===== Analytics ===== -->
+    <div class="cards">
       <div class="card">
-        <div class="topbar">
-          <h3 style="margin:0;flex:1">Visitors (पुराना डाटा)</h3>
-          <input id="searchMobile" placeholder="मोबाइल से खोजें (10 अंक)" style="width:220px">
-          <button id="btnSearch" class="btn">खोजें</button>
-          <button id="btnReset" class="btn">Recent 200</button>
-        </div>
-        <div style="border:1px solid #eee;border-radius:10px;overflow:auto">
-          <table>
-            <thead>
-              <tr>
-                <th>तारीख/समय</th><th>नाम</th><th>मोबाइल</th>
-                <th>मंडल</th><th>कारण</th>
-              </tr>
-            </thead>
-            <tbody id="visitorRows"></tbody>
-          </table>
-        </div>
-        <p class="muted" style="margin-top:6px">* तालिका Firestore की <b>visitors</b> कलेक्शन से डेटा दिखाती है।</p>
+        <h3 style="margin:0 0 8px">Top Visitors</h3>
+        <div id="analyticsTopVisitors"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 8px">Busy Office Days</h3>
+        <div id="analyticsBusyOfficeDays"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 8px">Event Summary</h3>
+        <div id="analyticsEventSummary"></div>
+      </div>
+      <div class="card">
+        <h3 style="margin:0 0 8px">Selected Event: Rows</h3>
+        <div id="analyticsSelectedEvent"></div>
       </div>
     </div>
   </div>
 
-<script>
-  // Firebase init
-  const firebaseConfig = {
-    apiKey: "AIzaSyD-xaGtrczkUCT7rwEOuRnHzVE9AohYsKU",
-    authDomain: "bjplivefirebase.firebaseapp.com",
-    projectId: "bjplivefirebase",
-    storageBucket: "bjplivefirebase.firebasestorage.app",
-    messagingSenderId: "236867156337",
-    appId: "1:236867156337:web:1fbd6c535689a6f34d5ed0",
-    measurementId: "G-M5KY8DW9JD"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-
-  // ---------- EVENTS ----------
-  const $ = (id)=>document.getElementById(id);
-  const eventRows = $('eventRows');
-
-  async function setOnlyThisActive(docId){
-    const batch = db.batch();
-    const all = await db.collection('events').get();
-    all.forEach(d => batch.update(d.ref, { active: d.id === docId }));
-    await batch.commit();
-  }
-  async function clearActive(){
-    const all = await db.collection('events').where('active','==',true).get();
-    const batch = db.batch();
-    all.forEach(d => batch.update(d.ref, { active:false }));
-    await batch.commit();
-  }
-
-  $('btnAdd').addEventListener('click', async ()=>{
-    const name = $('eventName').value.trim();
-    if(!name) return alert('नाम दर्ज करें');
-    await db.collection('events').add({ name, active:false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-    $('eventName').value='';
-  });
-  $('btnClearActive').addEventListener('click', async ()=>{
-    await clearActive(); alert('Active इवेंट हटाया गया');
-  });
-
-  function renderEvents(docs){
-    eventRows.innerHTML='';
-    docs.forEach(doc=>{
-      const d=doc.data();
-      const tr=document.createElement('tr');
-      tr.innerHTML = `
-        <td>${d.name||''}</td>
-        <td>${d.active?'<span class="pill">Active</span>':'<span class="pill">Inactive</span>'}</td>
-        <td>
-          <button data-id="${doc.id}" class="btn btnActive">Active करें</button>
-          <button data-id="${doc.id}" class="btn danger btnDelete">Delete</button>
-        </td>`;
-      eventRows.appendChild(tr);
-    });
-    eventRows.querySelectorAll('.btnActive').forEach(b=>b.addEventListener('click', async e=>{
-      await setOnlyThisActive(e.currentTarget.getAttribute('data-id'));
-      alert('यह इवेंट अब Active है');
-    }));
-    eventRows.querySelectorAll('.btnDelete').forEach(b=>b.addEventListener('click', async e=>{
-      const id=e.currentTarget.getAttribute('data-id');
-      if(!confirm('पक्का हटाना है?')) return;
-      await db.collection('events').doc(id).delete();
-    }));
-  }
-  db.collection('events').orderBy('createdAt','desc').onSnapshot(s=>renderEvents(s.docs));
-
-  // ---------- VISITORS (पुराना डेटा व्यू) ----------
-  const visitorRows = $('visitorRows');
-
-  function tsToLocal(ts){
-    try{
-      const d = ts?.toDate ? ts.toDate() : (ts ? new Date(ts) : null);
-      if(!d) return '';
-      return d.toLocaleString('en-IN', { hour12: false });
-    }catch(e){ return ''; }
-  }
-
-  async function loadRecent(){
-    const s = await db.collection('visitors').orderBy('timestamp','desc').limit(200).get();
-    renderVisitors(s.docs);
-  }
-  function renderVisitors(docs){
-    visitorRows.innerHTML='';
-    docs.forEach(doc=>{
-      const d=doc.data();
-      const tr=document.createElement('tr');
-      tr.innerHTML = `
-        <td>${tsToLocal(d.timestamp)}</td>
-        <td>${d.name||''}</td>
-        <td>${d.mobile||''}</td>
-        <td>${d.mandal||''}</td>
-        <td>${d.reason||''}</td>`;
-      visitorRows.appendChild(tr);
-    });
-  }
-
-  $('btnSearch').addEventListener('click', async ()=>{
-    const m = ($('searchMobile').value||'').replace(/\D/g,'').slice(-10);
-    if(m.length!==10){ alert('कृपया 10 अंकों का मोबाइल डालें'); return; }
-    const s = await db.collection('visitors').where('mobile','==',m).orderBy('timestamp','desc').limit(100).get();
-    renderVisitors(s.docs);
-  });
-  $('btnReset').addEventListener('click', loadRecent);
-
-  // initial
-  loadRecent();
-</script>
+  <!-- आपका पूरा Admin logic -->
+  <script src="admin.js"></script>
 </body>
 </html>
