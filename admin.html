@@ -4,20 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Admin • Visitors & Events</title>
+
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700;800&display=swap" rel="stylesheet">
 
-  <!-- (Optional) अपनी admin.css जोड़ें—अगर नहीं चाहें तो हटा दें -->
-  <link rel="stylesheet" href="admin.css">
-
-  <!-- SweetAlert -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-  <!-- Firebase (Compat) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
   <style>
-    /* Minimal safe defaults (admin.css न मिले तो) */
+    *{box-sizing:border-box}
     body{font-family:'Noto Sans Devanagari',system-ui,-apple-system,Arial,sans-serif;background:#f6f6f6;margin:0}
     .wrap{max-width:1220px;margin:24px auto;background:#fff;padding:18px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
     h1{margin:0 0 10px}
@@ -33,36 +24,32 @@
     .foot{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:10px 0}
     .empty{padding:16px;color:#777}
     img.preview{height:40px;width:40px;object-fit:cover;border-radius:6px;cursor:pointer}
-    .cards{display:grid;grid-template-columns:1fr;gap:14px;margin-top:16px}
+    .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
     .card{border:1px solid #eee;border-radius:10px;padding:12px}
   </style>
+
+  <!-- SweetAlert -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <div class="wrap">
     <h1>एडमिन पैनल</h1>
 
-    <!-- ===== Filters & Search ===== -->
+    <!-- Filters -->
     <div class="filters" style="margin-bottom:12px">
       <div class="cell"><label>From</label><input type="date" id="fromDate"></div>
       <div class="cell"><label>To</label><input type="date" id="toDate"></div>
       <div class="cell"><label>Reason</label><select id="reasonSelect"><option value="">— सभी —</option></select></div>
       <div class="cell"><label>Mandal</label><select id="mandalSelect"><option value="">— सभी —</option></select></div>
-      <div class="cell"><label>Type</label>
-        <select id="visitorType">
-          <option value="all">All</option>
-          <option value="office">Office</option>
-          <option value="event">Event</option>
-        </select>
-      </div>
-      <div class="cell"><label>Event</label><select id="eventFilter"><option value="">— सभी इवेंट —</option></select></div>
-    </div>
-    <div class="toolbar">
-      <input id="searchInput" placeholder="नाम/मोबाइल/पते से खोजें" style="flex:1">
-      <button id="exportBtn" class="btn">Export CSV</button>
-      <button id="clearBtn" class="btn">♻️ Clear</button>
+      <div class="cell"><label>Search</label><input id="searchInput" placeholder="नाम/मोबाइल/पता"></div>
+      <div class="cell"><label>&nbsp;</label><button id="clearBtn" class="btn">♻️ Clear</button></div>
     </div>
 
-    <!-- ===== Event Management ===== -->
+    <!-- Events -->
     <div class="card">
       <div class="toolbar" style="justify-content:space-between">
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -79,12 +66,12 @@
       <div style="margin-top:6px;color:#666">वर्तमान Active: <b id="activeEventLabel">—</b></div>
     </div>
 
-    <!-- ===== Table ===== -->
+    <!-- Table -->
     <div style="border:1px solid #eee;border-radius:10px;overflow:auto;margin-top:12px">
       <table id="dataTable">
         <thead>
           <tr>
-            <th>समय</th><th>नाम</th><th>मोबाइल</th><th>पद</th><th>मंडल</th><th>कारण</th><th>पता</th><th>सेल्फी</th><th>क्रिया</th>
+            <th>समय</th><th>नाम</th><th>मोबाइल</th><th>पद</th><th>मंडल</th><th>कारण</th><th>पता</th><th>सेल्फी</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -92,7 +79,7 @@
       <div id="emptyState" class="empty" style="display:none">कोई डेटा नहीं मिला…</div>
     </div>
 
-    <!-- ===== Pagination ===== -->
+    <!-- Pagination -->
     <div class="foot">
       <div style="display:flex; gap:8px; align-items:center">
         <button id="firstPage" class="btn">⏮</button>
@@ -102,30 +89,255 @@
         <button id="lastPage" class="btn">⏭</button>
         <span id="rowInfo" style="color:#666">(0–0 of 0)</span>
       </div>
+      <div style="display:flex; gap:8px; align-items:center">
+        <button id="exportBtn" class="btn">Export CSV</button>
+      </div>
     </div>
 
-    <!-- ===== Analytics ===== -->
+    <!-- Analytics (simple) -->
     <div class="cards">
       <div class="card">
-        <h3 style="margin:0 0 8px">Top Visitors</h3>
+        <h3 style="margin:0 0 8px">Top Visitors (by visits)</h3>
         <div id="analyticsTopVisitors"></div>
-      </div>
-      <div class="card">
-        <h3 style="margin:0 0 8px">Busy Office Days</h3>
-        <div id="analyticsBusyOfficeDays"></div>
       </div>
       <div class="card">
         <h3 style="margin:0 0 8px">Event Summary</h3>
         <div id="analyticsEventSummary"></div>
       </div>
-      <div class="card">
-        <h3 style="margin:0 0 8px">Selected Event: Rows</h3>
-        <div id="analyticsSelectedEvent"></div>
-      </div>
     </div>
   </div>
 
-  <!-- आपका पूरा Admin logic -->
-  <script src="admin.js"></script>
+<script>
+  // =============== Firebase Init ===============
+  const firebaseConfig = {
+    apiKey: "AIzaSyD-xaGtrczkUCT7rwEOuRnHzVE9AohYsKU",
+    authDomain: "bjplivefirebase.firebaseapp.com",
+    projectId: "bjplivefirebase"
+  };
+  if (!firebase.apps?.length) firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  // =============== Globals ===============
+  const $ = (id)=>document.getElementById(id);
+  const REASONS = [
+    "कार्यालय पर बैठक","जिला अध्यक्ष से भेंट",
+    "ट्रांसफर / शासकीय कार्य / शिकायत","कार्यालय पर सामान्य उपस्थिति","अन्य कोई कार्य"
+  ];
+  const MANDALS = [
+    "भेंसोदा","भानपुरा","गरोठ","मेलखेडा","खड़ावदा","शामगढ़","सुवासरा","बसाई",
+    "सीतामऊ","क्यामपुर","सीतामऊ ग्रामीण","गुर्जर बरडिया","धुंदधड़का","बुढा",
+    "पिपलिया मंडी","मल्हारगढ़","दलोदा","मगरामाता जी","मंदसौर ग्रामीण",
+    "मंदसौर उत्तर","मंदसौर दक्षिण","अन्य जिले से आये"
+  ];
+
+  const state = {
+    all: [], // all visitors loaded
+    page: 1,
+    pageSize: 25,
+    filtered: [],
+    events: [],
+    activeEvent: null
+  };
+
+  // =============== UI Helpers ===============
+  function tsToLocal(ts){
+    try{ const d = ts?.toDate ? ts.toDate() : (ts ? new Date(ts) : null);
+      return d ? d.toLocaleString('en-IN',{hour12:false}) : ''; }catch(_){ return ''; }
+  }
+
+  function fillSelect(sel, items, placeholder){
+    sel.innerHTML = '';
+    const opt0 = document.createElement('option');
+    opt0.value = ''; opt0.textContent = placeholder || '— चुनें —';
+    sel.appendChild(opt0);
+    items.forEach(v=>{
+      const op = document.createElement('option'); op.value = v; op.textContent = v;
+      sel.appendChild(op);
+    });
+  }
+
+  function applyFilter(){
+    const q = ($('searchInput').value || '').toLowerCase().trim();
+    const fr = $('fromDate').value; const to = $('toDate').value;
+    const rs = $('reasonSelect').value; const md = $('mandalSelect').value;
+
+    let rows = [...state.all];
+    if (fr) { const s = new Date(fr + 'T00:00:00'); rows = rows.filter(r => r.timestamp?.toDate ? r.timestamp.toDate() >= s : true); }
+    if (to) { const e = new Date(to + 'T23:59:59'); rows = rows.filter(r => r.timestamp?.toDate ? r.timestamp.toDate() <= e : true); }
+    if (rs) rows = rows.filter(r => (r.reason || '') === rs);
+    if (md) rows = rows.filter(r => (r.mandal || '') === md);
+    if (q) {
+      rows = rows.filter(r => {
+        const blob = `${r.name||''} ${r.mobile||''} ${r.address||''} ${r.designation||''}`.toLowerCase();
+        return blob.includes(q);
+      });
+    }
+
+    state.filtered = rows;
+    state.page = 1;
+    renderTable();
+    renderAnalytics();
+  }
+
+  function renderTable(){
+    const tbody = $('dataTable').querySelector('tbody');
+    tbody.innerHTML = '';
+    const total = state.filtered.length;
+    const pages = Math.max(1, Math.ceil(total / state.pageSize));
+    state.page = Math.min(state.page, pages);
+
+    const start = (state.page - 1) * state.pageSize;
+    const slice = state.filtered.slice(start, start + state.pageSize);
+
+    if (!slice.length){
+      $('emptyState').style.display = 'block';
+    } else {
+      $('emptyState').style.display = 'none';
+      slice.forEach(row=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${tsToLocal(row.timestamp)}</td>
+          <td>${row.name||''}</td>
+          <td>${row.mobile||''}</td>
+          <td>${row.designation||''}</td>
+          <td>${row.mandal||''}</td>
+          <td>${row.reason||''}</td>
+          <td>${row.address||''}</td>
+          <td>${row.selfie ? `<a href="${row.selfie}" target="_blank">फोटो</a>` : ''}</td>`;
+        tbody.appendChild(tr);
+      });
+    }
+
+    $('pageInfo').textContent = `Page ${state.page} / ${pages}`;
+    const from = total ? start + 1 : 0;
+    const to = start + slice.length;
+    $('rowInfo').textContent = `(${from}–${to} of ${total})`;
+  }
+
+  function renderAnalytics(){
+    // Top Visitors (by count)
+    const map = new Map();
+    state.filtered.forEach(r=>{
+      const key = `${r.name||''}|${r.mobile||''}`;
+      map.set(key, (map.get(key)||0)+1);
+    });
+    const arr = [...map.entries()].map(([k,c])=>{
+      const [n,m] = k.split('|'); return { name:n||'(अनाम)', mobile:m||'', count:c };
+    }).sort((a,b)=>b.count-a.count).slice(0,10);
+    $('analyticsTopVisitors').innerHTML = arr.length
+      ? `<ol>${arr.map(x=>`<li>${x.name} (${x.mobile}) — <b>${x.count}</b></li>`).join('')}</ol>` : '—';
+
+    // Event Summary (count by reason names that match event names present)
+    $('analyticsEventSummary').innerHTML = 'कुल पंक्तियाँ: <b>'+state.filtered.length+'</b>';
+  }
+
+  function loadStaticFilters(){
+    fillSelect($('reasonSelect'), REASONS, '— सभी —');
+    fillSelect($('mandalSelect'), MANDALS, '— सभी —');
+  }
+
+  // =============== Events Management ===============
+  async function setOnlyThisActive(docId){
+    const batch = db.batch();
+    const all = await db.collection('events').get();
+    all.forEach(d => batch.update(d.ref, { active: d.id === docId }));
+    await batch.commit();
+  }
+  async function clearActive(){
+    const all = await db.collection('events').where('active','==',true).get();
+    const batch = db.batch();
+    all.forEach(d => batch.update(d.ref, { active:false }));
+    await batch.commit();
+  }
+  function renderEvents(){
+    const select = $('eventActiveSelect');
+    select.innerHTML = '';
+    const opt0 = document.createElement('option'); opt0.value = ''; opt0.textContent = '— इवेंट चुनें —';
+    select.appendChild(opt0);
+    state.events.forEach(ev=>{
+      const op = document.createElement('option');
+      op.value = ev.id; op.textContent = ev.name + (ev.active ? ' (Active)' : '');
+      select.appendChild(op);
+    });
+    const active = state.events.find(e => e.active);
+    $('activeEventLabel').textContent = active ? active.name : '—';
+  }
+
+  // =============== Wiring ===============
+  // live visitors
+  db.collection("visitors").orderBy("timestamp","desc").limit(2000)
+    .onSnapshot((snap) => {
+      state.all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      applyFilter();
+    });
+
+  // live events
+  db.collection('events').orderBy('createdAt','desc').onSnapshot(s=>{
+    state.events = s.docs.map(d=>({ id: d.id, ...d.data() }));
+    renderEvents();
+  });
+
+  // filters & actions
+  $('fromDate').addEventListener('change', applyFilter);
+  $('toDate').addEventListener('change', applyFilter);
+  $('reasonSelect').addEventListener('change', applyFilter);
+  $('mandalSelect').addEventListener('change', applyFilter);
+  $('searchInput').addEventListener('input', applyFilter);
+  $('clearBtn').addEventListener('click', ()=>{
+    $('fromDate').value=''; $('toDate').value=''; $('reasonSelect').value='';
+    $('mandalSelect').value=''; $('searchInput').value=''; applyFilter();
+  });
+
+  // events actions
+  $('addEventBtn').addEventListener('click', async ()=>{
+    const name = ($('eventNameInput').value || '').trim();
+    if (!name) return Swal.fire('नाम चाहिए', 'इवेंट का नाम दर्ज करें', 'warning');
+    await db.collection('events').add({ name, active:false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    $('eventNameInput').value='';
+  });
+  $('setActiveBtn').addEventListener('click', async ()=>{
+    const id = $('eventActiveSelect').value;
+    if (!id) return;
+    await setOnlyThisActive(id);
+    Swal.fire('Done', 'यह इवेंट अब Active है', 'success');
+  });
+  $('endEventBtn').addEventListener('click', async ()=>{
+    await clearActive();
+    Swal.fire('Done', 'Active इवेंट हटाया गया', 'success');
+  });
+
+  // pagination
+  $('firstPage').addEventListener('click', ()=>{ state.page=1; renderTable(); });
+  $('prevPage').addEventListener('click', ()=>{ state.page=Math.max(1,state.page-1); renderTable(); });
+  $('nextPage').addEventListener('click', ()=>{
+    const pages = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
+    state.page=Math.min(pages,state.page+1); renderTable();
+  });
+  $('lastPage').addEventListener('click', ()=>{
+    state.page = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
+    renderTable();
+  });
+
+  // export CSV
+  $('exportBtn').addEventListener('click', ()=>{
+    const rows = state.filtered.map(r=>({
+      timestamp: tsToLocal(r.timestamp), name: r.name||'', mobile: r.mobile||'',
+      designation: r.designation||'', mandal: r.mandal||'', reason: r.reason||'',
+      address: r.address||'', selfie: r.selfie||''
+    }));
+    const headers = Object.keys(rows[0] || {timestamp:'',name:'',mobile:'',designation:'',mandal:'',reason:'',address:'',selfie:''});
+    const csv = [headers.join(',')].concat(
+      rows.map(r=>headers.map(h=>`"${String(r[h]||'').replace(/"/g,'""')}"`).join(','))
+    ).join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = 'visitors_export.csv'; a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  // init static filters
+  fillSelect($('reasonSelect'), REASONS, '— सभी —');
+  fillSelect($('mandalSelect'), MANDALS, '— सभी —');
+</script>
 </body>
 </html>
