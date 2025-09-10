@@ -3,149 +3,172 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin Panel — Visitors Only</title>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="admin.css" />
-  <!-- Firebase (compat) -->
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-  <!-- SweetAlert -->
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <title>Admin • Events</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari&display=swap" rel="stylesheet">
+
+  <!-- 🔁 आपकी पुरानी admin.css को inline किया गया है -->
+  <style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Noto Sans Devanagari', system-ui, -apple-system, Arial, sans-serif;
+    background: #f6f6f6;
+    margin: 0;
+  }
+  .container {
+    max-width: 1220px;
+    margin: 24px auto;
+    background: #fff;
+    padding: 18px 18px 26px;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  }
+
+  /* Header */
+  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .header h1 { margin:0; }
+  .export-top {
+    padding: 10px 16px; border: none; border-radius: 10px;
+    background: #ff6a00; color: #fff; font-weight: 700; cursor: pointer;
+    margin-bottom: 10px;
+  }
+  .export-top:hover { background: #e55f00; }
+
+  /* Filters row */
+  .filters {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(140px, 1fr));
+    gap: 10px;
+    margin: 14px 0 16px;
+  }
+  .filter-item { display: flex; flex-direction: column; gap: 6px; }
+  .filter-item.grow { grid-column: span 2; }
+  .filter-item.shrink { align-self: end; }
+  .filters label { font-size: 13px; color: #333; font-weight: 700; }
+  input, select, button {
+    padding: 10px; border: 1px solid #e4e6ef; border-radius: 8px; font-size: 15px;
+  }
+
+  /* Table */
+  .table-wrap { overflow: auto; border:1px solid #eee; border-radius: 10px; }
+  table { width:100%; border-collapse: collapse; }
+  th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+  th { background:#fafafa; font-weight:800; }
+
+  .pill { padding:4px 8px; border-radius:999px; font-size:12px; background:#eef2ff; display:inline-block; }
+  .danger { background:#fee2e2; color:#991b1b; }
+  .muted { color:#6b7280; font-size:13px; }
+  .btn { background:#0d6efd; color:#fff; border:none; cursor:pointer; padding:8px 12px; border-radius:8px; }
+  .btn.danger { background:#dc2626; }
+  </style>
 </head>
 <body>
   <div class="container">
-    <header class="header">
-      <div class="logo-col"></div>
-      <div class="title-col">
-        <h1>भारतीय जनता पार्टी जिला मंदसौर</h1>
-        <h3>भाजपा कार्यलय आगन्तुक पंजीयन</h3>
-      </div>
-      <div class="action-col">
-        <button id="exportBtn" class="export-top">📥 CSV</button>
-      </div>
-    </header>
-
-    <!-- ✅ Event Management (कॉम्पैक्ट: dropdown + बटन) -->
-    <div class="filters" style="border:1px solid #eee; padding:10px; margin-bottom:12px;">
-      <div class="filter-item" style="grid-column: span 6;">
-        <label>नया इवेंट जोड़ें</label>
-        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
-          <input id="eventNameInput" type="text" placeholder="इवेंट का नाम" />
-          <button id="addEventBtn" type="button">➕ जोड़ें</button>
-
-          <span style="flex-basis:100%; height:6px;"></span>
-
-          <label style="min-width:140px;">Set Active:</label>
-          <select id="eventActiveSelect" style="min-width:240px;"></select>
-          <button id="setActiveBtn" type="button">✅ Set Active</button>
-          <button id="endEventBtn" type="button">⏹️ इवेंट समाप्त करें</button>
-          <span style="margin-left:8px; font-size:13px; color:#444;">Active: <b id="activeEventLabel">—</b></span>
-        </div>
-      </div>
+    <div class="header">
+      <h1>इवेंट प्रबंधन</h1>
+      <button class="export-top" id="btnClearActive">Active हटाएँ</button>
     </div>
 
-    <!-- ✅ Filters -->
     <div class="filters">
-      <div class="filter-item">
-        <label>तारीख (From)</label>
-        <input id="fromDate" type="date" />
-      </div>
-      <div class="filter-item">
-        <label>तारीख (To)</label>
-        <input id="toDate" type="date" />
-      </div>
-      <div class="filter-item">
-        <label>आने का कारण</label>
-        <select id="reasonSelect">
-          <option value="">सभी</option>
-        </select>
-      </div>
-      <div class="filter-item">
-        <label>मंडल</label>
-        <select id="mandalSelect">
-          <option value="">सभी</option>
-        </select>
-      </div>
-
-      <!-- NEW: Visitor Type -->
-      <div class="filter-item">
-        <label>Visitor Type</label>
-        <select id="visitorType">
-          <option value="all">All (सभी)</option>
-          <option value="office">Office Only</option>
-          <option value="event">Event Only</option>
-        </select>
-      </div>
-
-      <!-- NEW: Event Filter -->
-      <div class="filter-item">
-        <label>Event Filter</label>
-        <select id="eventFilter">
-          <option value="">— सभी इवेंट —</option>
-        </select>
-      </div>
-
       <div class="filter-item grow">
-        <label>खोज</label>
-        <input id="searchInput" type="text" placeholder="नाम / मोबाइल / पता..." />
+        <label>इवेंट का नाम</label>
+        <input id="eventName" placeholder="इवेंट का नाम लिखें">
       </div>
       <div class="filter-item shrink">
-        <button id="clearBtn" type="button">♻️ Clear</button>
+        <label>&nbsp;</label>
+        <button id="btnAdd" class="btn">इवेंट जोड़ें</button>
       </div>
     </div>
 
     <div class="table-wrap">
-      <table id="dataTable">
-        <thead>
-          <tr>
-            <th>समय</th>
-            <th>नाम</th>
-            <th>मोबाइल</th>
-            <th>पद</th>
-            <th>मंडल</th>
-            <th>आने का कारण</th>
-            <th>पता</th>
-            <th>सेल्फ़ी</th>
-            <th>हटाएँ</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
+      <table>
+        <thead><tr><th>नाम</th><th>स्थिति</th><th>कार्रवाई</th></tr></thead>
+        <tbody id="eventRows"></tbody>
       </table>
     </div>
 
-    <!-- ✅ NEW: Pagination controls (30 per page) -->
-    <div class="pager" style="display:flex; align-items:center; gap:8px; justify-content:flex-end; margin:10px 2px 0;">
-      <span id="rowInfo" style="font-size:13px; color:#666; margin-right:auto;">(0–0 of 0)</span>
-      <button id="firstPage" type="button">⏮️</button>
-      <button id="prevPage"  type="button">◀️ Prev</button>
-      <span id="pageInfo" style="min-width:110px; text-align:center; font-size:13px; color:#444;">Page 1 / 1</span>
-      <button id="nextPage"  type="button">Next ▶️</button>
-      <button id="lastPage"  type="button">⏭️</button>
-    </div>
-
-    <div id="emptyState" class="empty" style="display:none;">कोई डेटा उपलब्ध नहीं।</div>
-
-    <!-- ✅ Analytics -->
-    <div class="filters" style="margin-top:16px;">
-      <div class="filter-item" style="grid-column: span 3;">
-        <label><b>व्यक्ति-वार विज़िट सारांश</b> (फिल्टर/डेट रेंज लागू)</label>
-        <div id="analyticsTopVisitors" class="table-wrap" style="max-height:320px; overflow:auto;"></div>
-      </div>
-      <div class="filter-item" style="grid-column: span 3;">
-        <label><b>Office – सबसे व्यस्त दिन</b></label>
-        <div id="analyticsBusyOfficeDays" class="table-wrap" style="max-height:320px; overflow:auto;"></div>
-      </div>
-      <div class="filter-item" style="grid-column: span 3;">
-        <label><b>Event-wise उपस्थिति</b></label>
-        <div id="analyticsEventSummary" class="table-wrap" style="max-height:320px; overflow:auto;"></div>
-      </div>
-      <div class="filter-item" style="grid-column: span 3;">
-        <label><b>चयनित इवेंट – विज़िटर लिस्ट</b></label>
-        <div id="analyticsSelectedEvent" class="table-wrap" style="max-height:320px; overflow:auto;"></div>
-      </div>
-    </div>
+    <p class="muted" style="margin-top:10px;">* एक समय में केवल एक इवेंट Active रखें।</p>
   </div>
 
-  <script src="admin.js"></script>
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script>
+  // --- Firebase init ---
+  const firebaseConfig = {
+    apiKey: "AIzaSyD-xaGtrczkUCT7rwEOuRnHzVE9AohYsKU",
+    authDomain: "bjplivefirebase.firebaseapp.com",
+    projectId: "bjplivefirebase",
+    storageBucket: "bjplivefirebase.firebasestorage.app",
+    messagingSenderId: "236867156337",
+    appId: "1:236867156337:web:1fbd6c535689a6f34d5ed0",
+    measurementId: "G-M5KY8DW9JD"
+  };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const $ = (id) => document.getElementById(id);
+  const rows = $('eventRows');
+
+  async function setOnlyThisActive(docId) {
+    const batch = db.batch();
+    const all = await db.collection('events').get();
+    all.forEach(d => batch.update(d.ref, { active: d.id === docId }));
+    await batch.commit();
+  }
+
+  async function clearActive() {
+    const all = await db.collection('events').where('active','==',true).get();
+    const batch = db.batch();
+    all.forEach(d => batch.update(d.ref, { active:false }));
+    await batch.commit();
+  }
+
+  $('btnAdd').addEventListener('click', async () => {
+    const name = $('eventName').value.trim();
+    if (!name) return alert('नाम दर्ज करें');
+    await db.collection('events').add({ name, active:false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+    $('eventName').value='';
+  });
+
+  $('btnClearActive').addEventListener('click', async () => {
+    await clearActive();
+    alert('Active इवेंट हटाया गया');
+  });
+
+  function render(docs) {
+    rows.innerHTML = '';
+    docs.forEach(doc => {
+      const d = doc.data();
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${d.name || ''}</td>
+        <td>${d.active ? '<span class="pill">Active</span>' : '<span class="pill">Inactive</span>'}</td>
+        <td>
+          <button data-id="${doc.id}" class="btn">Active करें</button>
+          <button data-id="${doc.id}" class="btn danger">Delete</button>
+        </td>`;
+      rows.appendChild(tr);
+    });
+
+    rows.querySelectorAll('.btn').forEach(b => {
+      if (b.classList.contains('danger')) {
+        b.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          if (!confirm('पक्का हटाना है?')) return;
+          await db.collection('events').doc(id).delete();
+        });
+      } else {
+        b.addEventListener('click', async (e) => {
+          const id = e.currentTarget.getAttribute('data-id');
+          await setOnlyThisActive(id);
+          alert('यह इवेंट अब Active है');
+        });
+      }
+    });
+  }
+
+  db.collection('events').orderBy('createdAt','desc').onSnapshot(snap => render(snap.docs));
+</script>
 </body>
 </html>
