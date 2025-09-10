@@ -9,14 +9,14 @@
 
   <style>
     :root{
-      --brand:#ff6a00;           /* Orange */
+      --brand:#ff6a00;
       --brand-600:#ff7f26;
       --brand-700:#ff9933;
       --brand-800:#e25800;
       --text:#202124;
       --muted:#6b7280;
-      --surface:#ffffff;         /* White */
-      --bg:#fff8f1;              /* very light orange */
+      --surface:#ffffff;
+      --bg:#fff8f1;
       --line:#f1f5f9;
       --chip:#fff2e6;
     }
@@ -54,30 +54,29 @@
     .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;background:#fff;border:1px solid var(--brand);color:var(--brand)}
   </style>
 
-  <!-- SweetAlert -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <!-- Firebase -->
+  <!-- Firebase (Compat for simplicity here) -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
   <div class="wrap">
     <div class="brandbar"><div class="branddot"></div><h1>एडमिन पैनल</h1></div>
-    <div class="subtitle">पुराने सभी रिकॉर्ड, कार्यक्रम‑वाइज फ़िल्टर, डेली ऑफिस/इवेंट विज़िटर अलग‑अलग, फोटो थम्बनेल, और ऑरेंज‑व्हाइट थीम।</div>
+    <div class="subtitle">पुराने रिकॉर्ड लोड, कार्यक्रम-वाइज फ़िल्टर, कार्यालय/इवेंट अलग व्यू, थम्बनेल, माह/दिन के अनुसार काउंट, और ऑरेंज–व्हाइट थीम।</div>
 
-    <!-- Quick chips (Office / Event / All) -->
     <div class="chips" style="margin-bottom:8px">
       <div class="chip active" data-type="">सभी विज़िटर</div>
       <div class="chip" data-type="office">भाजपा कार्यालय (डेली)</div>
       <div class="chip" data-type="event">इवेंट विज़िटर</div>
     </div>
 
-    <!-- Filters -->
     <div class="filters" style="margin-bottom:12px">
       <div class="cell"><label>From</label><input type="date" id="fromDate"></div>
       <div class="cell"><label>To</label><input type="date" id="toDate"></div>
-      <div class="cell"><label>Reason</label><select id="reasonSelect"><option value="">— सभी —</option></select></div>
+      <div class="cell"><label>आने का कारण</label>
+        <select id="reasonSelect"><option value="">— सभी —</option></select>
+      </div>
       <div class="cell"><label>Mandal</label><select id="mandalSelect"><option value="">— सभी —</option></select></div>
       <div class="cell"><label>इवेंट</label><select id="eventSelect"><option value="">— सभी —</option></select></div>
       <div class="cell"><label>फ़्रीक्वेंसी</label>
@@ -94,7 +93,6 @@
       <span id="activeTypeBadge" class="badge">व्यू: सभी</span>
     </div>
 
-    <!-- Events Manager -->
     <div class="card">
       <div class="toolbar" style="justify-content:space-between">
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
@@ -108,15 +106,14 @@
           <button id="endEventBtn" class="btn danger">इवेंट Deactivate</button>
         </div>
       </div>
-      <div class="notice">वर्तमान Active: <b id="activeEventLabel">—</b>. इवेंट Deactivate करने पर डिफ़ॉल्ट फॉर्म उपयोग होगा (सामान्य ऑफिस विज़िट).</div>
+      <div class="notice">वर्तमान Active: <b id="activeEventLabel">—</b>. इवेंट Deactivate होने पर केवल कार्यालय कारण दिखेंगे और डिफ़ॉल्ट फॉर्म लागू होगा।</div>
     </div>
 
-    <!-- Table -->
     <div class="table-wrap">
       <table id="dataTable">
         <thead>
           <tr>
-            <th>समय</th><th>नाम</th><th>मोबाइल</th><th>पद</th><th>मंडल</th><th>कारण</th><th>इवेंट</th><th>पता</th><th>फोटो</th>
+            <th>समय</th><th>नाम</th><th>मोबाइल</th><th>पद</th><th>मंडल</th><th>आने का कारण</th><th>पता</th><th>फोटो</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -124,9 +121,8 @@
       <div id="emptyState" class="empty" style="display:none">कोई डेटा नहीं मिला…</div>
     </div>
 
-    <!-- Pagination / Export / Load older -->
     <div class="foot">
-      <div style="display:flex; gap:8px; align-items:center">
+      <div style="display:flex; gap:8px; align-items:center;flex-wrap:wrap">
         <button id="firstPage" class="btn">⏮</button>
         <button id="prevPage" class="btn">◀</button>
         <span id="pageInfo">Page 1 / 1</span>
@@ -135,25 +131,24 @@
         <span id="rowInfo" style="color:#666">(0–0 of 0)</span>
       </div>
       <div style="display:flex; gap:8px; align-items:center;flex-wrap:wrap">
-        <button id="loadOlderBtn" class="btn ghost">⬇️ पुराने रिकॉर्ड लोड करें</button>
+        <button id="loadOlderBtn" class="btn ghost">⬇️ पुराने रिकॉर्ड (1000)</button>
+        <button id="loadAllBtn" class="btn ghost">⚡ सभी पुराने रिकॉर्ड</button>
         <button id="exportBtn" class="btn">Export CSV</button>
       </div>
     </div>
 
-    <!-- Analytics -->
     <div class="cards">
       <div class="card">
-        <h3>फ़्रीक्वेंसी सारांश</h3>
-        <div id="analyticsTopVisitors"></div>
-        <div id="analyticsFreq"></div>
+        <h3>टॉप 10 विज़िटर</h3>
+        <div id="top10Table"></div>
       </div>
       <div class="card">
-        <h3>माह‑वाइज / डेट‑वाइज काउंट</h3>
+        <h3>माह-वाइज / डेट-वाइज</h3>
         <div class="grid2">
           <div>
             <label>माह चुनें</label>
             <input type="month" id="monthPicker">
-            <div id="monthSummary" style="margin-top:8px"></div>
+            <div id="monthWiseTable" style="margin-top:8px"></div>
           </div>
           <div>
             <div id="dateWiseTable"></div>
@@ -164,7 +159,6 @@
   </div>
 
 <script>
-  // =============== Firebase Init ===============
   const firebaseConfig = {
     apiKey: "AIzaSyD-xaGtrczkUCT7rwEOuRnHzVE9AohYsKU",
     authDomain: "bjplivefirebase.firebaseapp.com",
@@ -173,11 +167,15 @@
   if (!firebase.apps?.length) firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // =============== Globals ===============
   const $ = (id)=>document.getElementById(id);
-  const REASONS = [
-    "कार्यालय पर बैठक","जिला अध्यक्ष से भेंट",
-    "트्रांसफर / शासकीय कार्य / शिकायत","कार्यालय पर सामान्य उपस्थिति","अन्य कोई कार्य"
+
+  // 5 निश्चित कार्यालय के कारण (dropdown)
+  const OFFICE_REASONS = [
+    "कार्यालय पर बैठक",
+    "जिला अध्यक्ष से भेंट",
+    "ट्रांसफर / शासकीय कार्य / शिकायत",
+    "कार्यालय पर सामान्य उपस्थिति",
+    "अन्य कोई कार्य"
   ];
   const MANDALS = [
     "भेंसोदा","भानपुरा","गरोठ","मेलखेडा","खड़ावदा","शामगढ़","सुवासरा","बसाई",
@@ -187,17 +185,16 @@
   ];
 
   const state = {
-    all: [],           // all visitors loaded
-    lastDoc: null,     // for loading older pages
+    all: [],
+    lastDoc: null,
     page: 1,
     pageSize: 25,
     filtered: [],
     events: [],
     activeEvent: null,
-    viewType: "",      // "", "office", "event"
+    viewType: "",
   };
 
-  // =============== UI Helpers ===============
   function tsToLocal(ts){
     try{ const d = ts?.toDate ? ts.toDate() : (ts ? new Date(ts) : null);
       return d ? d.toLocaleString('en-IN',{hour12:false}) : ''; }catch(_){ return ''; }
@@ -214,23 +211,35 @@
     });
   }
 
-  function textCell(v){ return v ? String(v) : ''; }
+  function computeDisplayReason(row){
+    const active = state.events.find(e=>e.active);
+    const isOfficeReason = OFFICE_REASONS.includes(row.reason||"");
+    const rowHasEvent = !!(row.eventId || row.eventName || (!isOfficeReason && (row.reason||"").length>0));
+
+    // नियम:
+    // - Admin टेबल में "इवेंट" नाम का अलग कॉलम नहीं है
+    // - अगर Active Event है और पंक्ति इवेंट से संबंधित है, तो "आने का कारण" में सिर्फ Active Event का नाम दिखाएँ
+    // - अन्यथा, केवल 5 कार्यालय कारणों में से जो भी हो वही दिखाएँ, नहीं तो "—"
+    if (active && rowHasEvent){
+      return active.name || "इवेंट";
+    }
+    return isOfficeReason ? (row.reason||"") : "—";
+  }
 
   function applyFilter(){
     const q = ($('searchInput').value || '').toLowerCase().trim();
     const fr = $('fromDate').value; const to = $('toDate').value;
     const rs = $('reasonSelect').value; const md = $('mandalSelect').value;
     const ev = $('eventSelect').value;
-    const fq = $('freqSelect').value; // more / less
+    const fq = $('freqSelect').value;
     const type = state.viewType;
 
     let rows = [...state.all];
 
-    // viewType segregations
     if (type === 'office'){
       rows = rows.filter(r => (r.type || r.category || 'office') === 'office' || (r.reason||'').includes('कार्यालय'));
     } else if (type === 'event'){
-      rows = rows.filter(r => (r.type || r.category) === 'event' || r.eventId || r.eventName);
+      rows = rows.filter(r => (r.type || r.category) === 'event' || r.eventId || r.eventName || (!OFFICE_REASONS.includes(r.reason||"")));
     }
 
     if (fr) { const s = new Date(fr + 'T00:00:00'); rows = rows.filter(r => r.timestamp?.toDate ? r.timestamp.toDate() >= s : true); }
@@ -246,7 +255,6 @@
       });
     }
 
-    // Frequency filter
     if (fq){
       const countByKey = new Map();
       rows.forEach(r => {
@@ -262,11 +270,11 @@
       });
     }
 
-    state.filtered = rows;
+    state.filtered = rows.sort((a,b)=> (b.timestamp?.toMillis?.()||0) - (a.timestamp?.toMillis?.()||0));
     state.page = 1;
     renderTable();
-    renderAnalytics();
-    renderMonthBreakdown();
+    renderTop10();
+    renderMonthAndDateTables();
   }
 
   function renderTable(){
@@ -285,16 +293,14 @@
       $('emptyState').style.display = 'none';
       slice.forEach(row=>{
         const tr = document.createElement('tr');
-        const evName = row.eventName || row.eventId || '';
         tr.innerHTML = `
           <td>${tsToLocal(row.timestamp)}</td>
-          <td>${textCell(row.name)}</td>
-          <td>${textCell(row.mobile)}</td>
-          <td>${textCell(row.designation)}</td>
-          <td>${textCell(row.mandal)}</td>
-          <td>${textCell(row.reason)}</td>
-          <td>${textCell(evName)}</td>
-          <td>${textCell(row.address)}</td>
+          <td>${row.name||''}</td>
+          <td>${row.mobile||''}</td>
+          <td>${row.designation||''}</td>
+          <td>${row.mandal||''}</td>
+          <td>${computeDisplayReason(row)}</td>
+          <td>${row.address||''}</td>
           <td>${row.selfie ? `<a href="${row.selfie}" target="_blank"><img class="preview" src="${row.selfie}" alt="फोटो"></a>` : ''}</td>`;
         tbody.appendChild(tr);
       });
@@ -306,8 +312,7 @@
     $('rowInfo').textContent = `(${from}–${to} of ${total})`;
   }
 
-  function renderAnalytics(){
-    // Top Visitors (by count)
+  function renderTop10(){
     const map = new Map();
     state.filtered.forEach(r=>{
       const key = `${r.name||''}|${r.mobile||''}`;
@@ -315,69 +320,68 @@
     });
     const arr = [...map.entries()].map(([k,c])=>{
       const [n,m] = k.split('|'); return { name:n||'(अनाम)', mobile:m||'', count:c };
-    }).sort((a,b)=>b.count-a.count);
+    }).sort((a,b)=>b.count-a.count).slice(0,10);
 
-    $('analyticsTopVisitors').innerHTML = arr.length
-      ? `<ol>${arr.slice(0,10).map(x=>`<li>${x.name} (${x.mobile}) — <b>${x.count}</b></li>`).join('')}</ol>`
+    const html = arr.length
+      ? `<table style="width:100%;border-collapse:collapse">
+           <thead><tr>
+             <th style="text-align:left;padding:6px;border-bottom:1px solid #eee">नाम</th>
+             <th style="text-align:left;padding:6px;border-bottom:1px solid #eee">मोबाइल</th>
+             <th style="text-align:left;padding:6px;border-bottom:1px solid #eee">कुल विज़िट</th>
+           </tr></thead>
+           <tbody>${arr.map(x=>`<tr>
+             <td style="padding:6px;border-bottom:1px solid #f5f5f5">${x.name}</td>
+             <td style="padding:6px;border-bottom:1px solid #f5f5f5">${x.mobile}</td>
+             <td style="padding:6px;border-bottom:1px solid #f5f5f5"><b>${x.count}</b></td>
+           </tr>`).join('')}</tbody>
+         </table>`
       : '—';
-
-    // Frequency quick stats
-    const more = arr.filter(x=>x.count>=3).length;
-    const less = arr.filter(x=>x.count<=1).length;
-    $('analyticsFreq').innerHTML = `
-      <div style="margin-top:6px;color:#444">
-        कुल पंक्तियाँ: <b>${state.filtered.length}</b> •
-        अधिक बार (≥3): <b>${more}</b> आगंतुक •
-        कम बार (≤1): <b>${less}</b> आगंतुक
-      </div>`;
+    $('top10Table').innerHTML = html;
   }
 
-  // Month/date breakdown and max‑day
-  function renderMonthBreakdown(){
-    const mp = $('monthPicker').value;
-    const list = state.filtered.filter(r=>{
-      if (!mp) return true;
+  function renderMonthAndDateTables(){
+    // Month-wise table over all filtered rows
+    const byMonth = new Map();
+    state.filtered.forEach(r=>{
       const d = r.timestamp?.toDate ? r.timestamp.toDate() : null;
-      if (!d) return false;
-      const ym = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
-      return ym===mp;
+      if (!d) return;
+      const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      byMonth.set(key, (byMonth.get(key)||0)+1);
     });
+    const monthRows = [...byMonth.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+    $('monthWiseTable').innerHTML = monthRows.length
+      ? `<table style="width:100%;border-collapse:collapse">
+           <thead><tr><th style="text-align:left;padding:6px;border-bottom:1px solid #eee">माह</th><th style="text-align:left;padding:6px;border-bottom:1px solid #eee">कुल</th></tr></thead>
+           <tbody>${monthRows.map(([m,c])=>`<tr><td style="padding:6px;border-bottom:1px solid #f5f5f5">${m}</td><td style="padding:6px;border-bottom:1px solid #f5f5f5">${c}</td></tr>`).join('')}</tbody>
+         </table>`
+      : '—';
 
+    // Date-wise table for selected month
+    const mp = $('monthPicker').value;
     const byDate = new Map();
-    list.forEach(r=>{
+    state.filtered.forEach(r=>{
       const d = r.timestamp?.toDate ? r.timestamp.toDate() : null;
-      if(!d) return;
+      if (!d) return;
+      const ym = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      if (mp && ym !== mp) return;
       const key = d.toISOString().slice(0,10);
       byDate.set(key, (byDate.get(key)||0)+1);
     });
-
-    // Highest date
-    let maxDate = null, maxCount = 0;
-    for(const [k,v] of byDate.entries()){ if (v>maxCount){ maxDate=k; maxCount=v; } }
-
-    $('monthSummary').innerHTML = `
-      <div>रिकॉर्ड: <b>${list.length}</b></div>
-      ${maxDate?`<div>सबसे अधिक विज़िटर: <b>${maxDate}</b> को <b>${maxCount}</b></div>`:''}
-    `;
-
-    // Small table
-    const rows = [...byDate.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
-    const html = rows.length
+    const dateRows = [...byDate.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+    $('dateWiseTable').innerHTML = dateRows.length
       ? `<table style="width:100%;border-collapse:collapse">
            <thead><tr><th style="text-align:left;padding:6px;border-bottom:1px solid #eee">तारीख</th><th style="text-align:left;padding:6px;border-bottom:1px solid #eee">कुल</th></tr></thead>
-           <tbody>${rows.map(([d,c])=>`<tr><td style="padding:6px;border-bottom:1px solid #f5f5f5">${d}</td><td style="padding:6px;border-bottom:1px solid #f5f5f5">${c}</td></tr>`).join('')}</tbody>
+           <tbody>${dateRows.map(([d,c])=>`<tr><td style="padding:6px;border-bottom:1px solid #f5f5f5">${d}</td><td style="padding:6px;border-bottom:1px solid #f5f5f5">${c}</td></tr>`).join('')}</tbody>
          </table>`
       : '—';
-    $('dateWiseTable').innerHTML = html;
   }
 
   function loadStaticFilters(){
-    fillSelect($('reasonSelect'), REASONS, '— सभी —');
+    fillSelect($('reasonSelect'), OFFICE_REASONS, '— सभी —'); // केवल 5 कार्यालय कारण
     fillSelect($('mandalSelect'), MANDALS, '— सभी —');
   }
 
   function renderEventsDropDowns(){
-    // visitor filter dropdown (eventSelect) uses event id/name
     const sel = $('eventSelect');
     sel.innerHTML = '<option value="">— सभी —</option>';
     state.events.forEach(ev => {
@@ -386,12 +390,8 @@
       op.textContent = ev.name + (ev.active ? ' (Active)' : '');
       sel.appendChild(op);
     });
-
-    // active select in manager
     const select = $('eventActiveSelect');
-    select.innerHTML = '';
-    const opt0 = document.createElement('option'); opt0.value = ''; opt0.textContent = '— इवेंट चुनें —';
-    select.appendChild(opt0);
+    select.innerHTML = '<option value="">— इवेंट चुनें —</option>';
     state.events.forEach(ev=>{
       const op = document.createElement('option');
       op.value = ev.id; op.textContent = ev.name + (ev.active ? ' (Active)' : '');
@@ -401,7 +401,7 @@
     $('activeEventLabel').textContent = active ? active.name : '—';
   }
 
-  // =============== Events Management ===============
+  // Batch helpers for event active toggle
   async function setOnlyThisActive(docId){
     const batch = db.batch();
     const all = await db.collection('events').get();
@@ -415,27 +415,32 @@
     await batch.commit();
   }
 
-  // =============== Data Loading ===============
-  // Live latest (for real‑time updates)
-  db.collection("visitors").orderBy("timestamp","desc").limit(500)
+  // Live latest
+  db.collection("visitors").orderBy("timestamp","desc").limit(1000)
     .onSnapshot((snap) => {
       const latest = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      // merge latest into state.all (dedupe by id)
       const map = new Map(state.all.map(r=>[r.id,r]));
       latest.forEach(r=>map.set(r.id,r));
       state.all = [...map.values()].sort((a,b)=> (b.timestamp?.toMillis?.()||0) - (a.timestamp?.toMillis?.()||0));
-      if (latest.length) state.lastDoc = snap.docs[snap.docs.length-1]; // for loading older beyond these
+      if (latest.length) state.lastDoc = snap.docs[snap.docs.length-1];
       applyFilter();
     });
 
-  // Load older pages on demand (so "पुराने सारे रिकॉर्ड")
+  // Load older single-page (1000)
   $('loadOlderBtn').addEventListener('click', async ()=>{
+    await loadOlderOnce();
+  });
+
+  async function loadOlderOnce(){
     try{
-      const q = db.collection("visitors").orderBy("timestamp","desc").startAfter(state.lastDoc||null).limit(1000);
+      if (!state.lastDoc){
+        Swal.fire('ध्यान दें', 'और पुराने रिकॉर्ड लोड करने के लिए पहले कुछ डेटा दिखना चाहिए।', 'info');
+        return;
+      }
+      const q = db.collection("visitors").orderBy("timestamp","desc").startAfter(state.lastDoc).limit(1000);
       const snap = await q.get();
       const older = snap.docs.map(d => ({ id: d.id, ...d.data() }));
       state.lastDoc = snap.docs[snap.docs.length-1] || state.lastDoc;
-      // append (dedupe)
       const map = new Map(state.all.map(r=>[r.id,r]));
       older.forEach(r=>map.set(r.id,r));
       state.all = [...map.values()].sort((a,b)=> (b.timestamp?.toMillis?.()||0) - (a.timestamp?.toMillis?.()||0));
@@ -447,16 +452,45 @@
       console.error(err);
       Swal.fire('Error', 'पुराने रिकॉर्ड लाने में समस्या आई।', 'error');
     }
+  }
+
+  // Load ALL older (loop until empty) — ताकि 1200-1500 जैसी पूरी हिस्ट्री आ जाए
+  $('loadAllBtn').addEventListener('click', async ()=>{
+    let added = 0;
+    try{
+      if (!state.lastDoc){
+        Swal.fire('ध्यान दें', 'सभी पुराने रिकॉर्ड लोड करने के लिए पहले वर्तमान डेटा चाहिए।', 'info');
+        return;
+      }
+      while(true){
+        const q = db.collection("visitors").orderBy("timestamp","desc").startAfter(state.lastDoc).limit(1000);
+        const snap = await q.get();
+        if (snap.empty) break;
+        const older = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        state.lastDoc = snap.docs[snap.docs.length-1] || state.lastDoc;
+        const map = new Map(state.all.map(r=>[r.id,r]));
+        older.forEach(r=>map.set(r.id,r));
+        const before = state.all.length;
+        state.all = [...map.values()].sort((a,b)=> (b.timestamp?.toMillis?.()||0) - (a.timestamp?.toMillis?.()||0));
+        added += (state.all.length - before);
+        applyFilter();
+        if (older.length < 1000) break; // last page
+      }
+      Swal.fire('पूर्ण', `लोड हो गया। जोड़े गए रिकॉर्ड: ${added}`, 'success');
+    }catch(err){
+      console.error(err);
+      Swal.fire('Error', 'सभी पुराने रिकॉर्ड लोड करने में समस्या।', 'error');
+    }
   });
 
   // live events
   db.collection('events').orderBy('createdAt','desc').onSnapshot(s=>{
     state.events = s.docs.map(d=>({ id: d.id, ...d.data() }));
     renderEventsDropDowns();
+    applyFilter(); // reason-render depends on active event
   });
 
-  // =============== Actions ===============
-  // chips for view type
+  // UI actions
   document.querySelectorAll('.chip').forEach(el=>el.addEventListener('click',()=>{
     document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
     el.classList.add('active');
@@ -465,7 +499,6 @@
     applyFilter();
   }));
 
-  // filters & actions
   $('fromDate').addEventListener('change', applyFilter);
   $('toDate').addEventListener('change', applyFilter);
   $('reasonSelect').addEventListener('change', applyFilter);
@@ -473,6 +506,7 @@
   $('eventSelect').addEventListener('change', applyFilter);
   $('freqSelect').addEventListener('change', applyFilter);
   $('searchInput').addEventListener('input', applyFilter);
+
   $('clearBtn').addEventListener('click', ()=>{
     $('fromDate').value=''; $('toDate').value=''; $('reasonSelect').value='';
     $('mandalSelect').value=''; $('eventSelect').value=''; $('freqSelect').value='';
@@ -480,7 +514,6 @@
     document.querySelector('[data-type=""]').classList.add('active'); state.viewType=''; $('activeTypeBadge').textContent='व्यू: सभी'; applyFilter();
   });
 
-  // events actions
   $('addEventBtn').addEventListener('click', async ()=>{
     const name = ($('eventNameInput').value || '').trim();
     if (!name) return Swal.fire('नाम चाहिए', 'इवेंट का नाम दर्ज करें', 'warning');
@@ -498,26 +531,15 @@
     Swal.fire('Done', 'Active इवेंट हटाया गया — डिफ़ॉल्ट फॉर्म सक्रिय।', 'success');
   });
 
-  // pagination
-  $('firstPage').addEventListener('click', ()=>{ state.page=1; renderTable(); });
-  $('prevPage').addEventListener('click', ()=>{ state.page=Math.max(1,state.page-1); renderTable(); });
-  $('nextPage').addEventListener('click', ()=>{
-    const pages = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
-    state.page=Math.min(pages,state.page+1); renderTable();
-  });
-  $('lastPage').addEventListener('click', ()=>{
-    state.page = Math.max(1, Math.ceil(state.filtered.length / state.pageSize));
-    renderTable();
-  });
-
-  // export CSV
+  // export
   $('exportBtn').addEventListener('click', ()=>{
     const rows = state.filtered.map(r=>({
       timestamp: tsToLocal(r.timestamp), name: r.name||'', mobile: r.mobile||'',
-      designation: r.designation||'', mandal: r.mandal||'', reason: r.reason||'',
-      event: (r.eventName||r.eventId||''), address: r.address||'', selfie: r.selfie||''
+      designation: r.designation||'', mandal: r.mandal||'',
+      reason: computeDisplayReason(r),
+      address: r.address||'', selfie: r.selfie||''
     }));
-    const headers = Object.keys(rows[0] || {timestamp:'',name:'',mobile:'',designation:'',mandal:'',reason:'',event:'',address:'',selfie:''});
+    const headers = Object.keys(rows[0] || {timestamp:'',name:'',mobile:'',designation:'',mandal:'',reason:'',address:'',selfie:''});
     const csv = [headers.join(',')].concat(
       rows.map(r=>headers.map(h=>`"${String(r[h]||'').replace(/"/g,'""')}"`).join(','))
     ).join('\\n');
@@ -527,16 +549,11 @@
     URL.revokeObjectURL(url);
   });
 
-  // init static filters
-  fillSelect($('reasonSelect'), REASONS, '— सभी —');
+  // init
+  fillSelect($('reasonSelect'), OFFICE_REASONS, '— सभी —');
   fillSelect($('mandalSelect'), MANDALS, '— सभी —');
-
-  // month picker default = current month
-  (function initMonth(){
-    const d=new Date();
-    $('monthPicker').value = d.toISOString().slice(0,7);
-  })();
-  $('monthPicker').addEventListener('change', renderMonthBreakdown);
+  (function initMonth(){ const d=new Date(); $('monthPicker').value = d.toISOString().slice(0,7); })();
+  $('monthPicker').addEventListener('change', renderMonthAndDateTables);
 </script>
 </body>
 </html>
