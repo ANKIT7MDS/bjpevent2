@@ -5,12 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>आगंतुक पंजीयन</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari&display=swap" rel="stylesheet">
-  <!-- आपकी पुरानी स्टाइल -->
+  <!-- पहले जैसा रंग/थीम -->
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <!-- ✅ Active इवेंट का नाम यहां दिखेगा -->
+    <!-- Active इवेंट का नाम यहाँ आएगा -->
     <h2 id="formHeading">भाजपा कार्यालय पर आपका स्वागत है</h2>
 
     <form id="visitor-form" autocomplete="off">
@@ -33,7 +33,7 @@
       <label for="mandal">मंडल:</label>
       <select id="mandal" name="mandal" required>
         <option value="">मंडल चुनें</option>
-        <!-- ✅ पहले जैसे static options -->
+        <!-- पहले जैसी static सूची -->
         <option>भेंसोदा</option><option>भानपुरा</option><option>गरोठ</option><option>मेलखेडा</option>
         <option>खड़ावदा</option><option>शामगढ़</option><option>सुवासरा</option><option>बसाई</option>
         <option>सीतामऊ</option><option>क्यामपुर</option><option>सीतामऊ ग्रामीण</option><option>गुर्जर बरडिया</option>
@@ -68,12 +68,12 @@
   <!-- SweetAlert -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  <!-- आपका पुराना सबमिशन/ऑटोफिल कोड -->
+  <!-- आपका पुराना logic (submit + mobile auto-fill + camera + telegram etc.) -->
   <script src="script.js"></script>
 
-  <!-- ✅ Extra: Active Event → Header + Reason Prefill + मोबाइल सर्च बटन -->
+  <!-- Extra: Active Event binding + मोबाइल सर्च ट्रिगर -->
   <script>
-    // script.js में firebase.initializeApp हो चुका है; वही db/logic reuse
+    // Active Event → header + reason prefill
     (function bindActiveEvent(){
       const headingEl = document.getElementById("formHeading");
       const reasonSel = document.getElementById("reason");
@@ -82,7 +82,6 @@
         const exists = Array.from(reasonSel.options).some(o=>o.value===value);
         if(!exists){
           const op=document.createElement('option'); op.value=value; op.textContent=value;
-          // placeholder के बाद insert
           if (reasonSel.firstChild && reasonSel.firstChild.tagName==="OPTION" && reasonSel.firstChild.value===""){
             reasonSel.insertBefore(op, reasonSel.firstChild.nextSibling);
           } else { reasonSel.insertBefore(op, reasonSel.firstChild); }
@@ -100,11 +99,17 @@
       });
     })();
 
-    // 🔍 मोबाइल सर्च बटन से भी blur जैसा auto-fill ट्रिगर
+    // 🔍 बटन/Enter पर भी mobile blur जैसा search चलाएँ (auto-fill)
     (function hookMobileSearch(){
-      const btn = document.getElementById('mobileSearch');
       const input = document.getElementById('mobile');
-      btn?.addEventListener('click', ()=> input.dispatchEvent(new Event('blur')) );
+      document.getElementById('mobileSearch')?.addEventListener('click', () => {
+        input.dispatchEvent(new Event('blur', { bubbles: true }));
+      });
+      input.addEventListener('keyup', (e) => {
+        if (e.key === 'Enter') {
+          e.currentTarget.dispatchEvent(new Event('blur', { bubbles: true }));
+        }
+      });
     })();
   </script>
 </body>
