@@ -5,101 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>आगंतुक पंजीयन</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari&display=swap" rel="stylesheet">
-
-  <!-- 🔁 आपकी पुरानी style.css को inline किया गया है -->
-  <style>
-  /* Base Reset */
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-
-  /* Body & Container Styling */
-  body {
-    background: linear-gradient(135deg, #ff6a00, #ffa41b);
-    font-family: 'Noto Sans Devanagari', sans-serif;
-    display: flex; justify-content: center; padding: 20px 0;
-  }
-  .container {
-    background: #fff8ef;
-    width: 100%;
-    max-width: 600px;
-    border-radius: 12px;
-    padding: 30px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-  }
-
-  /* Headings & Form Field Labels */
-  h2 {
-    text-align: center;
-    color: #b84000;
-    margin-bottom: 16px;
-    font-weight: 800;
-    letter-spacing: 0.2px;
-  }
-  label {
-    display: block;
-    margin: 10px 0 6px;
-    color: #5a2d0c;
-    font-weight: 700;
-    font-size: 15px;
-  }
-
-  /* Inputs & Selects */
-  input, select, textarea {
-    width: 100%;
-    padding: 12px 14px;
-    border: 2px solid #ffcf99;
-    border-radius: 10px;
-    font-size: 16px;
-    background: #fff;
-    outline: none;
-    transition: all .2s ease;
-  }
-  input:focus, select:focus, textarea:focus {
-    border-color: #ff8a33; box-shadow: 0 0 0 3px rgba(255,138,51,.2);
-  }
-  textarea { resize: vertical; min-height: 70px; }
-
-  /* Buttons */
-  button {
-    background: #ff6a00; color: white; border: none;
-    padding: 12px 16px; border-radius: 10px; cursor: pointer;
-    font-weight: 800; width: 100%;
-  }
-  button:hover { background: #e55f00; }
-  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-  /* Camera */
-  #camera, #snapshot {
-    width: 100%;
-    border-radius: 10px;
-    margin-top: 8px;
-    background: #000;
-  }
-
-  /* Status Message */
-  #thankYouMsg {
-    display: none;
-    background: #dff0d8;
-    color: #3c763d;
-    padding: 16px;
-    text-align: center;
-    font-weight: bold;
-    border-radius: 8px;
-    margin-top: 20px;
-  }
-  </style>
+  <!-- आपकी पुरानी स्टाइल -->
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <div class="container">
-    <!-- ✅ हेडिंग में Active Event का नाम आएगा -->
+    <!-- ✅ Active इवेंट का नाम यहां दिखेगा -->
     <h2 id="formHeading">भाजपा कार्यालय पर आपका स्वागत है</h2>
 
-    <form id="visitor-form">
+    <form id="visitor-form" autocomplete="off">
       <!-- मोबाइल नंबर -->
       <label for="mobile">मोबाइल नंबर:</label>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <input type="tel" id="mobile" name="mobile" required pattern="[0-9]{10}"
-               placeholder="10 अंकों का मोबाइल नंबर" style="flex:1;">
-        <span style="font-size:20px;">📱</span>
+      <div style="display: flex; align-items: center; gap: 8px;">
+        <input type="tel" id="mobile" name="mobile" required pattern="[0-9]{10}" placeholder="10 अंकों का मोबाइल नंबर" style="flex: 1;">
+        <span id="mobileSearch" title="खोजें" style="cursor: pointer; font-size: 20px; margin-top: 4px;">🔍</span>
       </div>
 
       <label for="name">नाम:</label>
@@ -109,162 +28,84 @@
       <input type="text" id="designation" name="designation" required placeholder="आपका पद दर्ज करें">
 
       <label for="address">पता / वार्ड / बूथ:</label>
-      <textarea id="address" name="address" required placeholder="पता लिखें"></textarea>
+      <input type="text" id="address" name="address" required placeholder="पूरा पता लिखें">
 
       <label for="mandal">मंडल:</label>
       <select id="mandal" name="mandal" required>
-        <option value="" selected>-- मंडल चुनें --</option>
-        <option>नगर</option>
-        <option>ग्रामीण</option>
+        <option value="">मंडल चुनें</option>
+        <!-- ✅ पहले जैसे static options -->
+        <option>भेंसोदा</option><option>भानपुरा</option><option>गरोठ</option><option>मेलखेडा</option>
+        <option>खड़ावदा</option><option>शामगढ़</option><option>सुवासरा</option><option>बसाई</option>
+        <option>सीतामऊ</option><option>क्यामपुर</option><option>सीतामऊ ग्रामीण</option><option>गुर्जर बरडिया</option>
+        <option>धुंदधड़का</option><option>बुढा</option><option>पिपलिया मंडी</option><option>मल्हारगढ़</option>
+        <option>दलोदा</option><option>मगरामाता जी</option><option>मंदसौर ग्रामीण</option><option>मंदसौर उत्तर</option>
+        <option>मंदसौर दक्षिण</option><option>अन्य जिले से आये</option>
       </select>
 
       <label for="reason">आने का कारण:</label>
       <select id="reason" name="reason" required>
-        <option value="" selected>-- कारण चुनें --</option>
-        <option>कार्यालय पर बैठक</option>
-        <option>जिला अध्यक्ष से भेंट</option>
-        <option>ट्रांसफर / शासकीय कार्य / शिकायत</option>
-        <option>कार्यालय पर सामान्य उपस्थिति</option>
+        <option value="">कारण चुनें</option>
+        <option>कार्यालय पर बैठक</option><option>जिला अध्यक्ष से भेंट</option>
+        <option>ट्रांसफर / शासकीय कार्य / शिकायत</option><option>कार्यालय पर सामान्य उपस्थिति</option>
         <option>अन्य कोई कार्य</option>
       </select>
-      <div style="color:#834000; font-size:13px; margin:6px 0 10px;">
-        * Admin में Active Event सेट होने पर यह अपने-आप उसी इवेंट के नाम पर चयन हो जाएगा।
-      </div>
 
-      <!-- कैमरा -->
-      <label>सेल्फ़ी:</label>
+      <label>सेल्फी लें:</label>
       <video id="camera" autoplay playsinline></video>
       <canvas id="snapshot" style="display:none;"></canvas>
-      <input type="hidden" id="selfieData" />
+      <input type="hidden" id="selfieData" name="selfieData">
+      <input type="button" value="📷 फोटो लें" onclick="capturePhoto()">
 
-      <div class="row" style="margin-top:10px;">
-        <button type="button" id="btnSnap">सेल्फ़ी लें</button>
-        <button type="submit" id="btnSubmit">सबमिट</button>
-      </div>
+      <button type="submit">सबमिट करें</button>
     </form>
-
-    <div id="thankYouMsg">धन्यवाद! आपकी जानकारी सेव हो गई है।</div>
   </div>
 
-  <!-- Firebase SDKs -->
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
 
-<script>
-  // --- Firebase init (आपके प्रोजेक्ट का वही config) ---
-  const firebaseConfig = {
-    apiKey: "AIzaSyD-xaGtrczkUCT7rwEOuRnHzVE9AohYsKU",
-    authDomain: "bjplivefirebase.firebaseapp.com",
-    projectId: "bjplivefirebase",
-    storageBucket: "bjplivefirebase.firebasestorage.app",
-    messagingSenderId: "236867156337",
-    appId: "1:236867156337:web:1fbd6c535689a6f34d5ed0",
-    measurementId: "G-M5KY8DW9JD"
-  };
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
-  const storage = firebase.storage();
+  <!-- SweetAlert -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-  // Helpers
-  const $ = (id) => document.getElementById(id);
-  const normMobile = (s) => (s || '').replace(/\D/g, '').slice(-10);
+  <!-- आपका पुराना सबमिशन/ऑटोफिल कोड -->
+  <script src="script.js"></script>
 
-  // Camera
-  const video = $('camera'), canvas = $('snapshot'), selfieInput = $('selfieData');
-  async function startCamera() {
-    try { const s = await navigator.mediaDevices.getUserMedia({ video: true }); video.srcObject = s; }
-    catch (e) { console.warn('Camera error:', e); }
-  }
-  startCamera();
-
-  $('btnSnap').addEventListener('click', () => {
-    const ctx = canvas.getContext('2d');
-    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0);
-    selfieInput.value = canvas.toDataURL('image/jpeg');
-    canvas.style.display = 'block';
-  });
-
-  // --- Active Event: Header + Reason Prefill ---
-  (function bindActiveEvent() {
-    const headingEl = $('formHeading');
-    const reasonSel = $('reason');
-
-    function ensureOptionAndSelect(value) {
-      if (!value) return;
-      const exists = Array.from(reasonSel.options).some(o => o.value === value);
-      if (!exists) {
-        const op = document.createElement('option');
-        op.value = value; op.textContent = value;
-        // placeholder के बाद insert
-        if (reasonSel.firstChild && reasonSel.firstChild.tagName === "OPTION" && reasonSel.firstChild.value === "") {
-          reasonSel.insertBefore(op, reasonSel.firstChild.nextSibling);
-        } else { reasonSel.insertBefore(op, reasonSel.firstChild); }
+  <!-- ✅ Extra: Active Event → Header + Reason Prefill + मोबाइल सर्च बटन -->
+  <script>
+    // script.js में firebase.initializeApp हो चुका है; वही db/logic reuse
+    (function bindActiveEvent(){
+      const headingEl = document.getElementById("formHeading");
+      const reasonSel = document.getElementById("reason");
+      function ensureOptionAndSelect(value){
+        if(!value) return;
+        const exists = Array.from(reasonSel.options).some(o=>o.value===value);
+        if(!exists){
+          const op=document.createElement('option'); op.value=value; op.textContent=value;
+          // placeholder के बाद insert
+          if (reasonSel.firstChild && reasonSel.firstChild.tagName==="OPTION" && reasonSel.firstChild.value===""){
+            reasonSel.insertBefore(op, reasonSel.firstChild.nextSibling);
+          } else { reasonSel.insertBefore(op, reasonSel.firstChild); }
+        }
+        reasonSel.value = value;
       }
-      reasonSel.value = value;
-      // reasonSel.disabled = true; // लॉक करना हो तो अनकॉमेंट करें
-    }
-    function sanitizeIfNA() {
-      const v = (reasonSel.value || '').trim().toLowerCase();
-      if (v === 'na' || v === 'n/a') reasonSel.value = '';
-    }
-
-    db.collection('events').where('active','==',true).limit(1).onSnapshot(snap => {
-      const doc = snap.docs[0];
-      const evName = doc && doc.data() && (doc.data().name || '').toString().trim();
-      if (evName) {
-        headingEl.textContent = `इवेंट: ${evName}`;
-        sanitizeIfNA();
-        ensureOptionAndSelect(evName);
-      } else {
-        headingEl.textContent = 'भाजपा कार्यालय पर आपका स्वागत है';
-        // reasonSel.disabled = false;
+      function sanitizeIfNA(){
+        const v=(reasonSel.value||'').trim().toLowerCase();
+        if(v==='na'||v==='n/a') reasonSel.value='';
       }
-    });
-  })();
-
-  // Mobile normalize
-  $('mobile').addEventListener('blur', (e) => {
-    e.target.value = normMobile(e.target.value);
-  });
-
-  // Submit
-  $('visitor-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = $('btnSubmit'); btn.disabled = true;
-
-    const name = $('name').value.trim();
-    const mobile = normMobile($('mobile').value.trim());
-    const designation = $('designation').value.trim();
-    const address = $('address').value.trim();
-    const mandal = $('mandal').value;
-    const reason = $('reason').value;
-    const selfieData = $('selfieData').value;
-
-    if (!name || !mobile || !designation || !address || !mandal || !reason || !selfieData) {
-      alert('कृपया सभी फ़ील्ड भरें और सेल्फ़ी लें।'); btn.disabled = false; return;
-    }
-
-    try {
-      const blob = await (await fetch(selfieData)).blob();
-      const path = `selfies/${Date.now()}_${mobile}.jpg`;
-      const up = await storage.ref(path).put(blob);
-      const selfieURL = await up.ref.getDownloadURL();
-
-      await db.collection('visitors').add({
-        name, mobile, designation, address, mandal, reason, selfie: selfieURL,
-        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+      firebase.firestore().collection('events').where('active','==',true).limit(1).onSnapshot(s=>{
+        const d=s.docs[0]?.data(); const evName=(d?.name||'').toString().trim();
+        if(evName){ headingEl.textContent=`इवेंट: ${evName}`; sanitizeIfNA(); ensureOptionAndSelect(evName); }
+        else { headingEl.textContent='भाजपा कार्यालय पर आपका स्वागत है'; }
       });
+    })();
 
-      $('thankYouMsg').style.display = 'block';
-      e.target.reset(); canvas.style.display='none'; selfieInput.value=''; startCamera();
-    } catch (err) {
-      console.error(err);
-      alert('त्रुटि हुई, पुनः प्रयास करें।');
-    }
-    btn.disabled = false;
-  });
-</script>
+    // 🔍 मोबाइल सर्च बटन से भी blur जैसा auto-fill ट्रिगर
+    (function hookMobileSearch(){
+      const btn = document.getElementById('mobileSearch');
+      const input = document.getElementById('mobile');
+      btn?.addEventListener('click', ()=> input.dispatchEvent(new Event('blur')) );
+    })();
+  </script>
 </body>
 </html>
