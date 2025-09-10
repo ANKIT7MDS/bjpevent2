@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Admin Panel — Visitors Only</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="admin.css" />
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <!-- SweetAlert -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="logo-col"></div>
+      <div class="title-col">
+        <h1>भारतीय जनता पार्टी जिला मंदसौर</h1>
+        <h3>भाजपा कार्यलय आगन्तुक पंजीयन</h3>
+      </div>
+      <div class="action-col">
+        <button id="exportBtn" class="export-top">📥 CSV</button>
+      </div>
+    </header>
+
+    <!-- ✅ Event Management (कॉम्पैक्ट: dropdown + बटन) -->
+    <div class="filters" style="border:1px solid #eee; padding:10px; margin-bottom:12px;">
+      <div class="filter-item" style="grid-column: span 6;">
+        <label>नया इवेंट जोड़ें</label>
+        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+          <input id="eventNameInput" type="text" placeholder="इवेंट का नाम" />
+          <button id="addEventBtn" type="button">➕ जोड़ें</button>
+
+          <span style="flex-basis:100%; height:6px;"></span>
+
+          <label style="min-width:140px;">Set Active:</label>
+          <select id="eventActiveSelect" style="min-width:240px;"></select>
+          <button id="setActiveBtn" type="button">✅ Set Active</button>
+          <button id="endEventBtn" type="button">⏹️ इवेंट समाप्त करें</button>
+          <span style="margin-left:8px; font-size:13px; color:#444;">Active: <b id="activeEventLabel">—</b></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ✅ Filters -->
+    <div class="filters">
+      <div class="filter-item">
+        <label>तारीख (From)</label>
+        <input id="fromDate" type="date" />
+      </div>
+      <div class="filter-item">
+        <label>तारीख (To)</label>
+        <input id="toDate" type="date" />
+      </div>
+      <div class="filter-item">
+        <label>आने का कारण</label>
+        <select id="reasonSelect">
+          <option value="">सभी</option>
+        </select>
+      </div>
+      <div class="filter-item">
+        <label>मंडल</label>
+        <select id="mandalSelect">
+          <option value="">सभी</option>
+        </select>
+      </div>
+
+      <!-- NEW: Visitor Type -->
+      <div class="filter-item">
+        <label>Visitor Type</label>
+        <select id="visitorType">
+          <option value="all">All (सभी)</option>
+          <option value="office">Office Only</option>
+          <option value="event">Event Only</option>
+        </select>
+      </div>
+
+      <!-- NEW: Event Filter -->
+      <div class="filter-item">
+        <label>Event Filter</label>
+        <select id="eventFilter">
+          <option value="">— सभी इवेंट —</option>
+        </select>
+      </div>
+
+      <div class="filter-item grow">
+        <label>खोज</label>
+        <input id="searchInput" type="text" placeholder="नाम / मोबाइल / पता..." />
+      </div>
+      <div class="filter-item shrink">
+        <button id="clearBtn" type="button">♻️ Clear</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="dataTable">
+        <thead>
+          <tr>
+            <th>समय</th>
+            <th>नाम</th>
+            <th>मोबाइल</th>
+            <th>पद</th>
+            <th>मंडल</th>
+            <th>आने का कारण</th>
+            <th>पता</th>
+            <th>सेल्फ़ी</th>
+            <th>हटाएँ</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- ✅ NEW: Pagination controls (30 per page) -->
+    <div class="pager" style="display:flex; align-items:center; gap:8px; justify-content:flex-end; margin:10px 2px 0;">
+      <span id="rowInfo" style="font-size:13px; color:#666; margin-right:auto;">(0–0 of 0)</span>
+      <button id="firstPage" type="button">⏮️</button>
+      <button id="prevPage"  type="button">◀️ Prev</button>
+      <span id="pageInfo" style="min-width:110px; text-align:center; font-size:13px; color:#444;">Page 1 / 1</span>
+      <button id="nextPage"  type="button">Next ▶️</button>
+      <button id="lastPage"  type="button">⏭️</button>
+    </div>
+
+    <div id="emptyState" class="empty" style="display:none;">कोई डेटा उपलब्ध नहीं।</div>
+
+    <!-- ✅ Analytics -->
+    <div class="filters" style="margin-top:16px;">
+      <div class="filter-item" style="grid-column: span 3;">
+        <label><b>व्यक्ति-वार विज़िट सारांश</b> (फिल्टर/डेट रेंज लागू)</label>
+        <div id="analyticsTopVisitors" class="table-wrap" style="max-height:320px; overflow:auto;"></div>
+      </div>
+      <div class="filter-item" style="grid-column: span 3;">
+        <label><b>Office – सबसे व्यस्त दिन</b></label>
+        <div id="analyticsBusyOfficeDays" class="table-wrap" style="max-height:320px; overflow:auto;"></div>
+      </div>
+      <div class="filter-item" style="grid-column: span 3;">
+        <label><b>Event-wise उपस्थिति</b></label>
+        <div id="analyticsEventSummary" class="table-wrap" style="max-height:320px; overflow:auto;"></div>
+      </div>
+      <div class="filter-item" style="grid-column: span 3;">
+        <label><b>चयनित इवेंट – विज़िटर लिस्ट</b></label>
+        <div id="analyticsSelectedEvent" class="table-wrap" style="max-height:320px; overflow:auto;"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
