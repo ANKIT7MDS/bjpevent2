@@ -3,98 +3,80 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin • Events</title>
+  <title>Admin • Events & Visitors</title>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari&display=swap" rel="stylesheet">
-
-  <!-- 🔁 आपकी पुरानी admin.css को inline किया गया है -->
   <style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: 'Noto Sans Devanagari', system-ui, -apple-system, Arial, sans-serif;
-    background: #f6f6f6;
-    margin: 0;
-  }
-  .container {
-    max-width: 1220px;
-    margin: 24px auto;
-    background: #fff;
-    padding: 18px 18px 26px;
-    border-radius: 14px;
-    box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  }
-
-  /* Header */
-  .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
-  .header h1 { margin:0; }
-  .export-top {
-    padding: 10px 16px; border: none; border-radius: 10px;
-    background: #ff6a00; color: #fff; font-weight: 700; cursor: pointer;
-    margin-bottom: 10px;
-  }
-  .export-top:hover { background: #e55f00; }
-
-  /* Filters row */
-  .filters {
-    display: grid;
-    grid-template-columns: repeat(6, minmax(140px, 1fr));
-    gap: 10px;
-    margin: 14px 0 16px;
-  }
-  .filter-item { display: flex; flex-direction: column; gap: 6px; }
-  .filter-item.grow { grid-column: span 2; }
-  .filter-item.shrink { align-self: end; }
-  .filters label { font-size: 13px; color: #333; font-weight: 700; }
-  input, select, button {
-    padding: 10px; border: 1px solid #e4e6ef; border-radius: 8px; font-size: 15px;
-  }
-
-  /* Table */
-  .table-wrap { overflow: auto; border:1px solid #eee; border-radius: 10px; }
-  table { width:100%; border-collapse: collapse; }
-  th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
-  th { background:#fafafa; font-weight:800; }
-
-  .pill { padding:4px 8px; border-radius:999px; font-size:12px; background:#eef2ff; display:inline-block; }
-  .danger { background:#fee2e2; color:#991b1b; }
-  .muted { color:#6b7280; font-size:13px; }
-  .btn { background:#0d6efd; color:#fff; border:none; cursor:pointer; padding:8px 12px; border-radius:8px; }
-  .btn.danger { background:#dc2626; }
+    *{box-sizing:border-box}
+    body{font-family:'Noto Sans Devanagari',system-ui,-apple-system,Arial,sans-serif;background:#f6f6f6;margin:0}
+    .container{max-width:1220px;margin:24px auto;background:#fff;padding:18px 18px 26px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+    h1{margin:0 0 12px}
+    .row{display:grid;grid-template-columns:1fr 160px 140px;gap:10px}
+    input,button,select{padding:10px;border:1px solid #e4e6ef;border-radius:8px;font-size:15px}
+    .btn{background:#0d6efd;color:#fff;border:none;cursor:pointer;padding:10px 14px;border-radius:8px;font-weight:700}
+    .btn.danger{background:#dc2626}
+    .pill{padding:4px 8px;border-radius:999px;font-size:12px;background:#eef2ff;display:inline-block}
+    .muted{color:#6b7280;font-size:13px}
+    .grid{display:grid;grid-template-columns:1fr;gap:18px;margin-top:14px}
+    .card{border:1px solid #eee;border-radius:10px;padding:14px}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px;border-bottom:1px solid #eee;text-align:left}
+    th{background:#fafafa;font-weight:800}
+    .topbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
   </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>इवेंट प्रबंधन</h1>
-      <button class="export-top" id="btnClearActive">Active हटाएँ</button>
-    </div>
-
-    <div class="filters">
-      <div class="filter-item grow">
-        <label>इवेंट का नाम</label>
-        <input id="eventName" placeholder="इवेंट का नाम लिखें">
-      </div>
-      <div class="filter-item shrink">
-        <label>&nbsp;</label>
-        <button id="btnAdd" class="btn">इवेंट जोड़ें</button>
-      </div>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>नाम</th><th>स्थिति</th><th>कार्रवाई</th></tr></thead>
-        <tbody id="eventRows"></tbody>
-      </table>
-    </div>
-
-    <p class="muted" style="margin-top:10px;">* एक समय में केवल एक इवेंट Active रखें।</p>
-  </div>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>एडमिन पैनल</h1>
+
+    <div class="grid">
+      <!-- Events Card -->
+      <div class="card">
+        <h3 style="margin:0 0 10px">इवेंट प्रबंधन</h3>
+        <div class="row">
+          <input id="eventName" placeholder="इवेंट का नाम">
+          <button id="btnAdd" class="btn">इवेंट जोड़ें</button>
+          <button id="btnClearActive" class="btn danger">Active हटाएँ</button>
+        </div>
+        <p class="muted" style="margin-top:6px">* एक समय में केवल एक इवेंट Active रखें।</p>
+
+        <div style="margin-top:12px;border:1px solid #eee;border-radius:10px;overflow:auto">
+          <table>
+            <thead><tr><th>नाम</th><th>स्थिति</th><th>कार्रवाई</th></tr></thead>
+            <tbody id="eventRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Visitors Card -->
+      <div class="card">
+        <div class="topbar">
+          <h3 style="margin:0;flex:1">Visitors (पुराना डाटा)</h3>
+          <input id="searchMobile" placeholder="मोबाइल से खोजें (10 अंक)" style="width:220px">
+          <button id="btnSearch" class="btn">खोजें</button>
+          <button id="btnReset" class="btn">Recent 200</button>
+        </div>
+        <div style="border:1px solid #eee;border-radius:10px;overflow:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>तारीख/समय</th><th>नाम</th><th>मोबाइल</th>
+                <th>मंडल</th><th>कारण</th>
+              </tr>
+            </thead>
+            <tbody id="visitorRows"></tbody>
+          </table>
+        </div>
+        <p class="muted" style="margin-top:6px">* तालिका Firestore की <b>visitors</b> कलेक्शन से डेटा दिखाती है।</p>
+      </div>
+    </div>
+  </div>
 
 <script>
-  // --- Firebase init ---
+  // Firebase init
   const firebaseConfig = {
     apiKey: "AIzaSyD-xaGtrczkUCT7rwEOuRnHzVE9AohYsKU",
     authDomain: "bjplivefirebase.firebaseapp.com",
@@ -107,68 +89,99 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  const $ = (id) => document.getElementById(id);
-  const rows = $('eventRows');
+  // ---------- EVENTS ----------
+  const $ = (id)=>document.getElementById(id);
+  const eventRows = $('eventRows');
 
-  async function setOnlyThisActive(docId) {
+  async function setOnlyThisActive(docId){
     const batch = db.batch();
     const all = await db.collection('events').get();
     all.forEach(d => batch.update(d.ref, { active: d.id === docId }));
     await batch.commit();
   }
-
-  async function clearActive() {
+  async function clearActive(){
     const all = await db.collection('events').where('active','==',true).get();
     const batch = db.batch();
     all.forEach(d => batch.update(d.ref, { active:false }));
     await batch.commit();
   }
 
-  $('btnAdd').addEventListener('click', async () => {
+  $('btnAdd').addEventListener('click', async ()=>{
     const name = $('eventName').value.trim();
-    if (!name) return alert('नाम दर्ज करें');
+    if(!name) return alert('नाम दर्ज करें');
     await db.collection('events').add({ name, active:false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
     $('eventName').value='';
   });
-
-  $('btnClearActive').addEventListener('click', async () => {
-    await clearActive();
-    alert('Active इवेंट हटाया गया');
+  $('btnClearActive').addEventListener('click', async ()=>{
+    await clearActive(); alert('Active इवेंट हटाया गया');
   });
 
-  function render(docs) {
-    rows.innerHTML = '';
-    docs.forEach(doc => {
-      const d = doc.data();
-      const tr = document.createElement('tr');
+  function renderEvents(docs){
+    eventRows.innerHTML='';
+    docs.forEach(doc=>{
+      const d=doc.data();
+      const tr=document.createElement('tr');
       tr.innerHTML = `
-        <td>${d.name || ''}</td>
-        <td>${d.active ? '<span class="pill">Active</span>' : '<span class="pill">Inactive</span>'}</td>
+        <td>${d.name||''}</td>
+        <td>${d.active?'<span class="pill">Active</span>':'<span class="pill">Inactive</span>'}</td>
         <td>
-          <button data-id="${doc.id}" class="btn">Active करें</button>
-          <button data-id="${doc.id}" class="btn danger">Delete</button>
+          <button data-id="${doc.id}" class="btn btnActive">Active करें</button>
+          <button data-id="${doc.id}" class="btn danger btnDelete">Delete</button>
         </td>`;
-      rows.appendChild(tr);
+      eventRows.appendChild(tr);
     });
+    eventRows.querySelectorAll('.btnActive').forEach(b=>b.addEventListener('click', async e=>{
+      await setOnlyThisActive(e.currentTarget.getAttribute('data-id'));
+      alert('यह इवेंट अब Active है');
+    }));
+    eventRows.querySelectorAll('.btnDelete').forEach(b=>b.addEventListener('click', async e=>{
+      const id=e.currentTarget.getAttribute('data-id');
+      if(!confirm('पक्का हटाना है?')) return;
+      await db.collection('events').doc(id).delete();
+    }));
+  }
+  db.collection('events').orderBy('createdAt','desc').onSnapshot(s=>renderEvents(s.docs));
 
-    rows.querySelectorAll('.btn').forEach(b => {
-      if (b.classList.contains('danger')) {
-        b.addEventListener('click', async (e) => {
-          const id = e.currentTarget.getAttribute('data-id');
-          if (!confirm('पक्का हटाना है?')) return;
-          await db.collection('events').doc(id).delete();
-        });
-      } else {
-        b.addEventListener('click', async (e) => {
-          const id = e.currentTarget.getAttribute('data-id');
-          await setOnlyThisActive(id);
-          alert('यह इवेंट अब Active है');
-        });
-      }
+  // ---------- VISITORS (पुराना डेटा व्यू) ----------
+  const visitorRows = $('visitorRows');
+
+  function tsToLocal(ts){
+    try{
+      const d = ts?.toDate ? ts.toDate() : (ts ? new Date(ts) : null);
+      if(!d) return '';
+      return d.toLocaleString('en-IN', { hour12: false });
+    }catch(e){ return ''; }
+  }
+
+  async function loadRecent(){
+    const s = await db.collection('visitors').orderBy('timestamp','desc').limit(200).get();
+    renderVisitors(s.docs);
+  }
+  function renderVisitors(docs){
+    visitorRows.innerHTML='';
+    docs.forEach(doc=>{
+      const d=doc.data();
+      const tr=document.createElement('tr');
+      tr.innerHTML = `
+        <td>${tsToLocal(d.timestamp)}</td>
+        <td>${d.name||''}</td>
+        <td>${d.mobile||''}</td>
+        <td>${d.mandal||''}</td>
+        <td>${d.reason||''}</td>`;
+      visitorRows.appendChild(tr);
     });
   }
 
-  db.collection('events').orderBy('createdAt','desc').onSnapshot(snap => render(snap.docs));
+  $('btnSearch').addEventListener('click', async ()=>{
+    const m = ($('searchMobile').value||'').replace(/\D/g,'').slice(-10);
+    if(m.length!==10){ alert('कृपया 10 अंकों का मोबाइल डालें'); return; }
+    const s = await db.collection('visitors').where('mobile','==',m).orderBy('timestamp','desc').limit(100).get();
+    renderVisitors(s.docs);
+  });
+  $('btnReset').addEventListener('click', loadRecent);
+
+  // initial
+  loadRecent();
 </script>
 </body>
 </html>
