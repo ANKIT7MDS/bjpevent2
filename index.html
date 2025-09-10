@@ -3,13 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>आगंतुक पंजीयन</title>
+  <title>आगंतुक पंजीयन • Fast</title>
 
-  <!-- Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700;800&display=swap" rel="stylesheet">
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://firebasestorage.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.gstatic.com">
+  <link rel="dns-prefetch" href="https://firebasestorage.googleapis.com">
 
   <style>
-    /* === Look & Feel: पहले जैसा === */
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: linear-gradient(135deg, #ff6a00, #ffa41b);
@@ -18,54 +20,40 @@
     }
     .container {
       background: #fff8ef;
-      width: 100%;
-      max-width: 600px;
-      border-radius: 12px;
-      padding: 30px;
+      width: 100%; max-width: 600px;
+      border-radius: 12px; padding: 30px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.2);
     }
     h2 { text-align: center; color: #ff6a00; margin-bottom: 20px; }
-    label {
-      display: block; margin-top: 15px; margin-bottom: 5px;
-      font-weight: 800; color: #5a2d0c;
-    }
+    label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: 800; color: #5a2d0c; }
     input[type="text"], input[type="tel"], select {
       width: 100%; padding: 10px 14px; border: 2px solid #ffcf99;
       border-radius: 10px; font-size: 16px; background: #fff; outline: none;
     }
-    input:focus, select:focus {
-      border-color: #ff8a33; box-shadow: 0 0 0 3px rgba(255,138,51,.2);
-    }
+    input:focus, select:focus { border-color: #ff8a33; box-shadow: 0 0 0 3px rgba(255,138,51,.2); }
     button, input[type="button"] {
       width: 100%; padding: 12px; background-color: #ff6a00; color: white;
       font-size: 16px; font-weight: 800; border: none; border-radius: 10px;
       cursor: pointer; margin-top: 16px;
     }
+    button[disabled]{ opacity: .6; cursor: not-allowed; }
     button:hover, input[type="button"]:hover { background-color: #e55f00; }
-
+    .row { display:flex; align-items:center; gap:8px; }
     video, canvas {
       width: 100%; max-height: 300px; margin: 10px 0;
       display: block; border-radius: 10px; background: #000;
     }
-
-    /* SweetAlert look tweak (optional) */
-    .swal2-popup {
-      background: rgba(255,255,255,0.95) !important;
-      font-size: 16px;
-      border-radius: 12px !important;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.3);
-    }
+    .swal2-popup { background: rgba(255,255,255,0.95) !important; font-size: 16px; border-radius: 12px !important; box-shadow: 0 4px 14px rgba(0,0,0,0.3); }
+    small.help { color:#7a4a1f }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Active इवेंट का नाम यहाँ आएगा -->
     <h2 id="formHeading">भाजपा कार्यालय पर आपका स्वागत है</h2>
 
     <form id="visitor-form" autocomplete="off">
-      <!-- मोबाइल नंबर -->
       <label for="mobile">मोबाइल नंबर:</label>
-      <div style="display:flex; align-items:center; gap:8px;">
+      <div class="row">
         <input type="tel" id="mobile" name="mobile" required pattern="[0-9]{10}" placeholder="10 अंकों का मोबाइल नंबर" style="flex:1;">
         <span id="mobileSearch" title="खोजें" style="cursor:pointer;font-size:20px;margin-top:4px;">🔍</span>
       </div>
@@ -82,7 +70,6 @@
       <label for="mandal">मंडल:</label>
       <select id="mandal" name="mandal" required>
         <option value="">मंडल चुनें</option>
-        <!-- वही पुरानी static सूची -->
         <option>भेंसोदा</option><option>भानपुरा</option><option>गरोठ</option><option>मेलखेडा</option>
         <option>खड़ावदा</option><option>शामगढ़</option><option>सुवासरा</option><option>बसाई</option>
         <option>सीतामऊ</option><option>क्यामपुर</option><option>सीतामऊ ग्रामीण</option><option>गुर्जर बरडिया</option>
@@ -108,19 +95,16 @@
       <input type="button" value="📷 फोटो लें" id="btnSnap">
 
       <button type="submit" id="btnSubmit">सबमिट करें</button>
+      <small class="help">इवेंट के समय तेज़ सबमिट के लिए: फॉर्म पहले सेव होगा, फ़ोटो थोड़ी देर बाद अपने-आप जुड़ जाएगी।</small>
     </form>
   </div>
 
-  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
-
-  <!-- SweetAlert -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
   <script>
-    // =============== Firebase Init ===============
     const firebaseConfig = {
       apiKey: "AIzaSyD-xaGtrczkUCT7rwEOuRnHzVE9AohYsKU",
       authDomain: "bjplivefirebase.firebaseapp.com",
@@ -134,15 +118,32 @@
     const db = firebase.firestore();
     const storage = firebase.storage();
 
-    // Telegram (optional notification)
+    try { db.enablePersistence && db.enablePersistence({ synchronizeTabs: true }); }
+    catch (e) { console.warn('Persistence not enabled:', e.message||e); }
+
     const TELEGRAM_BOT_TOKEN = "8064306737:AAFvXvc3vIT1kyccGiPbpYGCAr9dgKJcRzw";
     const TELEGRAM_CHAT_ID = "733804072";
 
-    // =============== Helpers ===============
     const $ = (id) => document.getElementById(id);
     const normMobile = (s) => (s || "").replace(/\D/g, "").slice(-10);
 
-    // =============== Camera ===============
+    async function compressDataURL(dataURL, maxW=1024, maxH=1024, quality=0.6){
+      return new Promise((resolve)=>{
+        const img = new Image();
+        img.onload = ()=>{
+          let {width:w, height:h} = img;
+          const ratio = Math.min(maxW/w, maxH/h, 1);
+          const cw = Math.round(w*ratio), ch = Math.round(h*ratio);
+          const c = document.createElement('canvas');
+          c.width=cw; c.height=ch;
+          const ctx=c.getContext('2d');
+          ctx.drawImage(img,0,0,cw,ch);
+          resolve(c.toDataURL('image/jpeg', quality));
+        };
+        img.src = dataURL;
+      });
+    }
+
     const video = $('camera'), canvas = $('snapshot'), selfieInput = $('selfieData');
     async function startCamera(){
       try { const s = await navigator.mediaDevices.getUserMedia({ video: true }); video.srcObject = s; }
@@ -150,15 +151,16 @@
     }
     startCamera();
 
-    $('btnSnap').addEventListener('click', () => {
+    $('btnSnap').addEventListener('click', async () => {
       const ctx = canvas.getContext('2d');
       canvas.width = video.videoWidth; canvas.height = video.videoHeight;
       ctx.drawImage(video, 0, 0);
-      selfieInput.value = canvas.toDataURL('image/jpeg');
+      const raw = canvas.toDataURL('image/jpeg');
+      const compact = await compressDataURL(raw, 1024, 1024, 0.6);
+      selfieInput.value = compact;
       canvas.style.display = 'block';
     });
 
-    // =============== Active Event → Header + Reason Prefill ===============
     (function bindActiveEvent(){
       const headingEl = $('formHeading');
       const reasonSel = $('reason');
@@ -168,7 +170,6 @@
         const exists = Array.from(reasonSel.options).some(o=>o.value===value);
         if(!exists){
           const op=document.createElement('option'); op.value=value; op.textContent=value;
-          // placeholder के बाद insert
           if (reasonSel.firstChild && reasonSel.firstChild.tagName==="OPTION" && reasonSel.firstChild.value===""){
             reasonSel.insertBefore(op, reasonSel.firstChild.nextSibling);
           } else { reasonSel.insertBefore(op, reasonSel.firstChild); }
@@ -187,7 +188,6 @@
       });
     })();
 
-    // =============== Mobile → Auto-fill (blur/🔍/Enter) ===============
     async function autofillFromMobile(mobile){
       if (mobile.length !== 10) return;
       try{
@@ -200,7 +200,7 @@
           const data = doc.data();
           $('name').value = data["नाम"] || data["name"] || $('name').value;
           $('designation').value = data["पद"] || data["designation"] || $('designation').value;
-          $('address').value = data["पता"] || data["address"] || $('address').value;
+          $('address').value = data["পता"] || data["address"] || $('address').value;
           const mandalVal = data["मंडल"] || data["mandal"];
           if (mandalVal) {
             if (!Array.from($('mandal').options).some(o=>o.value===mandalVal)) {
@@ -213,21 +213,16 @@
       } catch (err) { console.warn('Auto-fill error:', err); }
     }
 
-    $('mobile').addEventListener('blur', (e)=>{
-      const m = normMobile(e.target.value); e.target.value = m;
-      autofillFromMobile(m);
-    });
-    $('mobileSearch')?.addEventListener('click', ()=>{
-      const input = $('mobile'); input.dispatchEvent(new Event('blur', { bubbles: true }));
-    });
-    $('mobile').addEventListener('keyup', (e)=>{
-      if (e.key === 'Enter') e.currentTarget.dispatchEvent(new Event('blur', { bubbles: true }));
-    });
+    $('mobile').addEventListener('blur', (e)=>{ const m = normMobile(e.target.value); e.target.value = m; autofillFromMobile(m); });
+    $('mobileSearch')?.addEventListener('click', ()=>{ const input = $('mobile'); input.dispatchEvent(new Event('blur', { bubbles: true })); });
+    $('mobile').addEventListener('keyup', (e)=>{ if (e.key === 'Enter') e.currentTarget.dispatchEvent(new Event('blur', { bubbles: true })); });
 
-    // =============== Submit ===============
+    let submitting = false;
     $('visitor-form').addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const btn = $('btnSubmit'); btn.disabled = true;
+      if (submitting) return; submitting = true;
+
+      const btn = $('btnSubmit'); btn.disabled = true; btn.textContent = 'सबमिट हो रहा है…';
 
       const name = $('name').value.trim();
       const mobile = normMobile($('mobile').value.trim());
@@ -239,37 +234,43 @@
 
       if(!name || !mobile || !designation || !address || !mandal || !reason || !selfieData){
         Swal.fire("Incomplete", "कृपया सभी फ़ील्ड भरें और सेल्फ़ी लें।", "warning");
-        btn.disabled = false; return;
+        btn.disabled = false; btn.textContent = 'सबमिट करें'; submitting = false; return;
       }
 
       try{
-        const blob = await (await fetch(selfieData)).blob();
-        const path = `selfies/${Date.now()}_${mobile}.jpg`;
-        const up = await storage.ref(path).put(blob);
-        const selfieURL = await up.ref.getDownloadURL();
-
-        await db.collection("visitors").add({
-          name, mobile, designation, address, mandal, reason, selfie: selfieURL,
+        const docRef = await db.collection("visitors").add({
+          name, mobile, designation, address, mandal, reason,
+          selfie: null, selfieUploading: true,
           timestamp: firebase.firestore.FieldValue.serverTimestamp()
         });
 
-        // (Optional) Telegram
-        try {
-          const text = `नया आगंतुक:\nनाम: ${name}\nमोबाइल: ${mobile}\nपद: ${designation}\nमंडल: ${mandal}\nपता: ${address}\nकारण: ${reason}\n📷 Selfie: ${selfieURL}`;
-          await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text })
-          });
-        } catch (_) {}
+        (async ()=>{
+          try{
+            const blob = await (await fetch(selfieData)).blob();
+            const path = `selfies/${Date.now()}_${mobile}.jpg`;
+            const up = await storage.ref(path).put(blob);
+            const selfieURL = await up.ref.getDownloadURL();
+            await docRef.update({ selfie: selfieURL, selfieUploading: false });
+          }catch(err){ console.warn('Selfie upload failed', err); }
+        })();
 
-        Swal.fire("✅ धन्यवाद!", "आपकी जानकारी सफलतापूर्वक सेव हो गई है।", "success");
+        try{
+          const text = `नया आगंतुक:\nनाम: ${name}\nमोबाइल: ${mobile}\nपद: ${designation}\nमंडल: ${mandal}\nपता: ${address}\nकारण: ${reason}`;
+          fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
+            method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ chat_id: TELEGRAM_CHAT_ID, text })
+          }).catch(()=>{});
+        }catch(_){}
+
+        Swal.fire("✅ धन्यवाद!", "आपकी जानकारी सेव हो गई है। फोटो थोड़ी देर में जुड़ जाएगी।", "success");
         e.target.reset(); canvas.style.display = "none"; selfieInput.value = ""; startCamera();
+
       } catch (err) {
         console.error(err);
         Swal.fire("Error", "कुछ त्रुटि हुई, कृपया पुनः प्रयास करें।", "error");
       }
-      btn.disabled = false;
+
+      btn.disabled = false; btn.textContent = 'सबमिट करें'; submitting = false;
     });
   </script>
 </body>
