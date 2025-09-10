@@ -52,6 +52,8 @@
     .notice{background:#fff1e6;border:1px solid #ffd2ad;padding:10px;border-radius:10px;color:#7a3e00}
     .table-wrap{border:1px solid #eee;border-radius:12px;overflow:auto;margin-top:12px;max-height:60vh;background:#fff}
     .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;background:#fff;border:1px solid var(--brand);color:var(--brand)}
+    .metric{display:inline-flex;align-items:baseline;gap:6px;background:#fff;border:1px solid #ffe1c4;border-radius:12px;padding:8px 10px;margin:6px 6px 0 0}
+    .metric b{font-size:18px}
   </style>
 
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -61,7 +63,7 @@
 <body>
   <div class="wrap">
     <div class="brandbar"><div class="branddot"></div><h1>एडमिन पैनल</h1></div>
-    <div class="subtitle">इवेंट deactivate होने पर भी एडमिन में पुरानी इवेंट एंट्री सुरक्षित; टॉप विज़िटर में Office व Event ब्रेकअप।</div>
+    <div class="subtitle">इवेंट ड्रॉपडाउन अब डेटा से ऑटो-भरा; Active ड्रॉपडाउन में पुराने सभी इवेंट; टोटल व इवेंट-वाइज काउंटर।</div>
 
     <div class="chips" style="margin-bottom:8px">
       <div class="chip active" data-type="">सभी विज़िटर</div>
@@ -99,12 +101,18 @@
         </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <label>Active:</label>
-          <select id="eventActiveSelect" style="min-width:240px"></select>
+          <select id="eventActiveSelect" style="min-width:260px"></select>
           <button id="setActiveBtn" class="btn">Active करें</button>
           <button id="endEventBtn" class="btn danger">इवेंट Deactivate</button>
         </div>
       </div>
-      <div class="notice">नोट: **Deactivate** केवल फॉर्म में इवेंट नाम हटाएगा; **एडमिन में सभी पिछले इवेंट रिकार्ड बने रहेंगे।</div>
+      <div class="notice">Active बदलने पर फॉर्म में वही इवेंट नाम आएगा। Deactivate पर फॉर्म से हट जाएगा, पर एडमिन इतिहास सुरक्षित रहेगा।</div>
+    </div>
+
+    <!-- Metrics -->
+    <div class="toolbar" id="metricsBar">
+      <div class="metric">कुल विज़िटर (फ़िल्टर्ड): <b id="totalCounter">0</b></div>
+      <div class="metric">इवेंट-वाइज कुल: <b id="eventWiseTotal">0</b></div>
     </div>
 
     <div class="table-wrap">
@@ -153,6 +161,12 @@
         </div>
       </div>
     </div>
+
+    <!-- Event-wise counts list -->
+    <div class="card" style="margin-top:14px">
+      <h3>इवेंट-वाइज विज़िटर काउंट</h3>
+      <div id="eventWiseTable"></div>
+    </div>
   </div>
 
 <script>
@@ -166,7 +180,6 @@
 
   const $ = (id)=>document.getElementById(id);
 
-  // फिक्स्ड कार्यालय कारण
   const OFFICE_REASONS = [
     "कार्यालय पर बैठक",
     "जिला अध्यक्ष से भेंट",
@@ -187,7 +200,8 @@
     page: 1,
     pageSize: 25,
     filtered: [],
-    events: [],
+    events: [],          // events collection
+    historicalEventNames: new Set(), // derived from data
     viewType: "",
   };
 
@@ -207,18 +221,68 @@
     });
   }
 
-  // आने का कारण तय करें: इवेंट होने पर हमेशा इवेंट नाम दिखे (Active की शर्त हटाई)
   function computeDisplayReason(row){
-    const isOfficeReason = OFFICE_REASONS.includes(row.reason||"");
-    const eventName = row.eventName || row.eventId || (!isOfficeReason ? (row.reason||"") : "");
-    if (eventName) return eventName; // इवेंट एंट्री—इतिहास बना रहे
-    if (isOfficeReason) return row.reason||"";
+    const isOffice = OFFICE_REASONS.includes(row.reason||"");
+    const eventName = row.eventName || row.eventId || (!isOffice ? (row.reason||"") : "");
+    if (eventName) return eventName;
+    if (isOffice) return row.reason||"";
     return "—";
   }
-
+  function computeEventName(row){
+    const isOffice = OFFICE_REASONS.includes(row.reason||"");
+    return row.eventName || row.eventId || (!isOffice ? (row.reason||"") : "");
+  }
   function isEventRow(row){
-    const isOfficeReason = OFFICE_REASONS.includes(row.reason||"");
-    return !!(row.eventName || row.eventId || (!isOfficeReason && (row.reason||"")));
+    return !!computeEventName(row);
+  }
+
+  function deriveHistoricalEvents(){
+    const set = new Set();
+    state.all.forEach(r=>{
+      const name = computeEventName(r);
+      if (name) set.add(name);
+    });
+    state.historicalEventNames = set;
+  }
+
+  function populateEventFilterDropdown(){
+    // eventSelect from combined (historical + events collection)
+    const names = new Set([...state.historicalEventNames]);
+    state.events.forEach(e => e.name && names.add(e.name));
+    const list = Array.from(names).sort((a,b)=>a.localeCompare(b,'hi'));
+    const sel = $('eventSelect');
+    sel.innerHTML = '<option value="">— सभी —</option>';
+    list.forEach(n=>{
+      const op = document.createElement('option');
+      op.value = n; op.textContent = n;
+      sel.appendChild(op);
+    });
+  }
+
+  function populateActiveDropdown(){
+    // include existing event docs (value=id) and historical-only (value=name:<name>)
+    const select = $('eventActiveSelect');
+    select.innerHTML = '';
+    const opt0 = document.createElement('option'); opt0.value=''; opt0.textContent='— इवेंट चुनें —';
+    select.appendChild(opt0);
+
+    const existingNames = new Set();
+    state.events.forEach(ev=>{
+      existingNames.add(ev.name);
+      const op = document.createElement('option');
+      op.value = ev.id;
+      op.textContent = ev.name + (ev.active ? ' (Active)' : '');
+      select.appendChild(op);
+    });
+    // add historical not in collection
+    state.historicalEventNames.forEach(n=>{
+      if (!existingNames.has(n)){
+        const op = document.createElement('option');
+        op.value = 'name:'+n;
+        op.textContent = n + ' (हिस्टोरी)';
+        select.appendChild(op);
+      }
+    });
   }
 
   function applyFilter(){
@@ -232,16 +296,16 @@
     let rows = [...state.all];
 
     if (type === 'office'){
-      rows = rows.filter(r => !isEventRow(r));  // केवल कार्यालय
+      rows = rows.filter(r => !isEventRow(r));
     } else if (type === 'event'){
-      rows = rows.filter(r => isEventRow(r));   // केवल इवेंट
+      rows = rows.filter(r => isEventRow(r));
     }
 
     if (fr) { const s = new Date(fr + 'T00:00:00'); rows = rows.filter(r => r.timestamp?.toDate ? r.timestamp.toDate() >= s : true); }
     if (to) { const e = new Date(to + 'T23:59:59'); rows = rows.filter(r => r.timestamp?.toDate ? r.timestamp.toDate() <= e : true); }
-    if (rs) rows = rows.filter(r => (r.reason || '') === rs); // केवल 5 ऑफिस कारण पर लागू
+    if (rs) rows = rows.filter(r => (r.reason || '') === rs);
     if (md) rows = rows.filter(r => (r.mandal || '') === md);
-    if (ev) rows = rows.filter(r => (r.eventId || r.eventName || '') === ev);
+    if (ev) rows = rows.filter(r => computeEventName(r) === ev);
 
     if (q) {
       rows = rows.filter(r => {
@@ -266,10 +330,16 @@
     }
 
     state.filtered = rows.sort((a,b)=> (b.timestamp?.toMillis?.()||0) - (a.timestamp?.toMillis?.()||0));
+    renderAll();
+  }
+
+  function renderAll(){
     state.page = 1;
     renderTable();
     renderTop10();
     renderMonthAndDateTables();
+    renderCounters();
+    renderEventWiseCounts();
   }
 
   function renderTable(){
@@ -307,7 +377,6 @@
     $('rowInfo').textContent = `(${from}–${to} of ${total})`;
   }
 
-  // Top 10 with Office vs Event breakdown
   function renderTop10(){
     const map = new Map();
     state.filtered.forEach(r=>{
@@ -375,20 +444,51 @@
       : '—';
   }
 
-  function renderEventsDropDowns(){
-    const sel = $('eventSelect');
-    sel.innerHTML = '<option value="">— सभी —</option>';
-    state.events.forEach(ev => {
-      const op = document.createElement('option');
-      op.value = ev.id || ev.name;
-      op.textContent = ev.name + (ev.active ? ' (Active)' : '');
-      sel.appendChild(op);
-    });
-    const active = state.events.find(e => e.active);
-    $('activeEventLabel') && ($('activeEventLabel').textContent = active ? active.name : '—');
+  function renderCounters(){
+    // total counter (filtered scope)
+    $('totalCounter').textContent = state.filtered.length;
+
+    // event-wise total (filtered scope)
+    let evCount = 0;
+    state.filtered.forEach(r => { if (isEventRow(r)) evCount++; });
+    $('eventWiseTotal').textContent = evCount;
   }
 
-  // Event mgmt helpers
+  function renderEventWiseCounts(){
+    // Count per event name (filtered)
+    const map = new Map();
+    state.filtered.forEach(r=>{
+      const en = computeEventName(r);
+      if (!en) return;
+      map.set(en, (map.get(en)||0)+1);
+    });
+    const rows = [...map.entries()].sort((a,b)=>b[1]-a[1]);
+    const html = rows.length
+      ? `<table style="width:100%;border-collapse:collapse">
+           <thead><tr><th style="text-align:left;padding:6px;border-bottom:1px solid #eee">इवेंट</th><th style="text-align:left;padding:6px;border-bottom:1px solid #eee">कुल विज़िटर</th></tr></thead>
+           <tbody>${rows.map(([n,c])=>`<tr><td style="padding:6px;border-bottom:1px solid #f5f5f5">${n}</td><td style="padding:6px;border-bottom:1px solid #f5f5f5">${c}</td></tr>`).join('')}</tbody>
+         </table>`
+      : '—';
+    $('eventWiseTable').innerHTML = html;
+  }
+
+  function renderEventsDropDowns(){
+    populateEventFilterDropdown();
+    populateActiveDropdown();
+  }
+
+  // Activate selected item; support creating doc from historical name
+  async function setOnlyThisActiveOrCreate(value){
+    if (!value) return;
+    if (value.startsWith('name:')){
+      const name = value.slice(5);
+      // create new doc with this name, set active=true and others false
+      const ref = await db.collection('events').add({ name, active:false, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      await setOnlyThisActive(ref.id);
+      return;
+    }
+    await setOnlyThisActive(value);
+  }
   async function setOnlyThisActive(docId){
     const batch = db.batch();
     const all = await db.collection('events').get();
@@ -402,7 +502,7 @@
     await batch.commit();
   }
 
-  // Live latest first page
+  // Live listeners
   db.collection("visitors").orderBy("timestamp","desc").limit(1000)
     .onSnapshot((snap) => {
       const latest = snap.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -410,6 +510,8 @@
       latest.forEach(r=>map.set(r.id,r));
       state.all = [...map.values()].sort((a,b)=> (b.timestamp?.toMillis?.()||0) - (a.timestamp?.toMillis?.()||0));
       if (latest.length) state.lastDoc = snap.docs[snap.docs.length-1];
+      deriveHistoricalEvents();
+      renderEventsDropDowns();
       applyFilter();
     });
 
@@ -432,9 +534,10 @@
         const before = state.all.length;
         state.all = [...map.values()].sort((a,b)=> (b.timestamp?.toMillis?.()||0) - (a.timestamp?.toMillis?.()||0));
         added += (state.all.length - before);
-        applyFilter();
-        if (older.length < 1000) break;
       }
+      deriveHistoricalEvents();
+      renderEventsDropDowns();
+      applyFilter();
       Swal.fire('पूर्ण', `लोड हो गया। जोड़े गए रिकॉर्ड: ${added}`, 'success');
     }catch(err){
       console.error(err);
@@ -442,14 +545,13 @@
     }
   });
 
-  // live events for dropdowns
+  // events snapshot
   db.collection('events').orderBy('createdAt','desc').onSnapshot(s=>{
     state.events = s.docs.map(d=>({ id: d.id, ...d.data() }));
     renderEventsDropDowns();
-    applyFilter();
   });
 
-  // UI wireup
+  // UI handlers
   document.querySelectorAll('.chip').forEach(el=>el.addEventListener('click',()=>{
     document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
     el.classList.add('active');
@@ -477,32 +579,14 @@
     document.getElementById('eventNameInput').value='';
   });
   $('setActiveBtn')?.addEventListener('click', async ()=>{
-    const id = document.getElementById('eventActiveSelect').value;
-    if (!id) return;
-    await setOnlyThisActive(id);
-    Swal.fire('Done', 'यह इवेंट अब Active है', 'success');
+    const value = document.getElementById('eventActiveSelect').value;
+    if (!value) return;
+    await setOnlyThisActiveOrCreate(value);
+    Swal.fire('Done', 'Active इवेंट सेट किया गया', 'success');
   });
   $('endEventBtn')?.addEventListener('click', async ()=>{
     await clearActive();
-    Swal.fire('Done', 'इवेंट Deactivate — फॉर्म में इवेंट नाम नहीं दिखेगा।', 'success');
-  });
-
-  // export
-  $('exportBtn').addEventListener('click', ()=>{
-    const rows = state.filtered.map(r=>({
-      timestamp: tsToLocal(r.timestamp), name: r.name||'', mobile: r.mobile||'',
-      designation: r.designation||'', mandal: r.mandal||'',
-      reason: computeDisplayReason(r),
-      address: r.address||'', selfie: r.selfie||''
-    }));
-    const headers = Object.keys(rows[0] || {timestamp:'',name:'',mobile:'',designation:'',mandal:'',reason:'',address:'',selfie:''});
-    const csv = [headers.join(',')].concat(
-      rows.map(r=>headers.map(h=>`"${String(r[h]||'').replace(/"/g,'""')}"`).join(','))
-    ).join('\\n');
-    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = 'visitors_export.csv'; a.click();
-    URL.revokeObjectURL(url);
+    Swal.fire('Done', 'इवेंट Deactivate — फॉर्म से इवेंट नाम हटेगा।', 'success');
   });
 
   // init
