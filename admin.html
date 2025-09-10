@@ -8,24 +8,50 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700;800&display=swap" rel="stylesheet">
 
   <style>
+    :root{
+      --brand:#ff6a00;           /* Orange */
+      --brand-600:#ff7f26;
+      --brand-700:#ff9933;
+      --brand-800:#e25800;
+      --text:#202124;
+      --muted:#6b7280;
+      --surface:#ffffff;         /* White */
+      --bg:#fff8f1;              /* very light orange */
+      --line:#f1f5f9;
+      --chip:#fff2e6;
+    }
     *{box-sizing:border-box}
-    body{font-family:'Noto Sans Devanagari',system-ui,-apple-system,Arial,sans-serif;background:#f6f6f6;margin:0}
-    .wrap{max-width:1220px;margin:24px auto;background:#fff;padding:18px;border-radius:14px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
-    h1{margin:0 0 10px}
-    .filters{display:grid;grid-template-columns:repeat(6,minmax(140px,1fr));gap:10px}
+    body{font-family:'Noto Sans Devanagari',system-ui,-apple-system,Arial,sans-serif;background:var(--bg);margin:0;color:var(--text)}
+    .wrap{max-width:1280px;margin:24px auto;background:var(--surface);padding:18px 18px 28px;border-radius:16px;box-shadow:0 8px 24px rgba(255,106,0,.12)}
+    .brandbar{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+    .branddot{height:14px;width:14px;border-radius:50%;background:var(--brand);box-shadow:0 0 0 4px #ffe5d1}
+    h1{margin:0 0 4px;font-weight:800}
+    .subtitle{color:var(--muted);font-size:14px;margin-bottom:12px}
+    .filters{display:grid;grid-template-columns:repeat(7,minmax(140px,1fr));gap:10px}
     .filters .cell{display:flex;flex-direction:column;gap:6px}
-    input,select,button{padding:10px;border:1px solid #e4e6ef;border-radius:8px;font-size:14px}
-    button.btn{background:#0d6efd;color:#fff;border:none;cursor:pointer}
+    label{font-size:12px;color:#555}
+    input,select,button{padding:10px;border:1px solid var(--line);border-radius:10px;font-size:14px;background:#fff}
+    button.btn{background:var(--brand);color:#fff;border:none;cursor:pointer;transition:.15s;box-shadow:0 4px 10px rgba(255,106,0,.18)}
+    button.btn:hover{background:var(--brand-800)}
+    button.btn.ghost{background:#fff;color:var(--brand);border:1px solid var(--brand)}
     button.btn.danger{background:#dc2626}
     .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:10px 0}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{padding:6px 10px;border:1px dashed var(--brand-700);background:var(--chip);border-radius:999px;cursor:pointer;font-size:12px}
+    .chip.active{background:var(--brand);color:#fff;border-style:solid}
     table{width:100%;border-collapse:collapse}
-    th,td{padding:8px;border-bottom:1px solid #eee;text-align:left}
-    th{background:#fafafa}
-    .foot{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:10px 0}
+    th,td{padding:10px;border-bottom:1px solid #f0f0f0;text-align:left;font-size:14px}
+    th{background:#fff6ee;position:sticky;top:0;z-index:1}
+    .foot{display:flex;gap:10px;align-items:center;justify-content:space-between;margin:14px 0}
     .empty{padding:16px;color:#777}
-    img.preview{height:40px;width:40px;object-fit:cover;border-radius:6px;cursor:pointer}
+    img.preview{height:44px;width:44px;object-fit:cover;border-radius:8px;cursor:pointer;border:1px solid #eee}
     .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
-    .card{border:1px solid #eee;border-radius:10px;padding:12px}
+    .card{border:1px solid #ffe1c4;border-radius:14px;padding:12px;background:#fffefb}
+    .card h3{margin:0 0 8px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .notice{background:#fff1e6;border:1px solid #ffd2ad;padding:10px;border-radius:10px;color:#7a3e00}
+    .table-wrap{border:1px solid #eee;border-radius:12px;overflow:auto;margin-top:12px;max-height:60vh;background:#fff}
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;background:#fff;border:1px solid var(--brand);color:var(--brand)}
   </style>
 
   <!-- SweetAlert -->
@@ -37,7 +63,15 @@
 </head>
 <body>
   <div class="wrap">
-    <h1>एडमिन पैनल</h1>
+    <div class="brandbar"><div class="branddot"></div><h1>एडमिन पैनल</h1></div>
+    <div class="subtitle">पुराने सभी रिकॉर्ड, कार्यक्रम‑वाइज फ़िल्टर, डेली ऑफिस/इवेंट विज़िटर अलग‑अलग, फोटो थम्बनेल, और ऑरेंज‑व्हाइट थीम।</div>
+
+    <!-- Quick chips (Office / Event / All) -->
+    <div class="chips" style="margin-bottom:8px">
+      <div class="chip active" data-type="">सभी विज़िटर</div>
+      <div class="chip" data-type="office">भाजपा कार्यालय (डेली)</div>
+      <div class="chip" data-type="event">इवेंट विज़िटर</div>
+    </div>
 
     <!-- Filters -->
     <div class="filters" style="margin-bottom:12px">
@@ -45,33 +79,44 @@
       <div class="cell"><label>To</label><input type="date" id="toDate"></div>
       <div class="cell"><label>Reason</label><select id="reasonSelect"><option value="">— सभी —</option></select></div>
       <div class="cell"><label>Mandal</label><select id="mandalSelect"><option value="">— सभी —</option></select></div>
-      <div class="cell"><label>Search</label><input id="searchInput" placeholder="नाम/मोबाइल/पता"></div>
-      <div class="cell"><label>&nbsp;</label><button id="clearBtn" class="btn">♻️ Clear</button></div>
+      <div class="cell"><label>इवेंट</label><select id="eventSelect"><option value="">— सभी —</option></select></div>
+      <div class="cell"><label>फ़्रीक्वेंसी</label>
+        <select id="freqSelect">
+          <option value="">— सभी —</option>
+          <option value="more">अधिक बार (≥3)</option>
+          <option value="less">कम बार (≤1)</option>
+        </select>
+      </div>
+      <div class="cell"><label>खोजें</label><input id="searchInput" placeholder="नाम/मोबाइल/पता"></div>
+    </div>
+    <div class="toolbar">
+      <button id="clearBtn" class="btn ghost">♻️ Clear Filters</button>
+      <span id="activeTypeBadge" class="badge">व्यू: सभी</span>
     </div>
 
-    <!-- Events -->
+    <!-- Events Manager -->
     <div class="card">
       <div class="toolbar" style="justify-content:space-between">
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-          <input id="eventNameInput" placeholder="इवेंट का नाम" style="min-width:240px">
+          <input id="eventNameInput" placeholder="नया इवेंट नाम" style="min-width:260px">
           <button id="addEventBtn" class="btn">इवेंट जोड़ें</button>
         </div>
         <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <label>Active:</label>
-          <select id="eventActiveSelect" style="min-width:220px"></select>
+          <select id="eventActiveSelect" style="min-width:240px"></select>
           <button id="setActiveBtn" class="btn">Active करें</button>
-          <button id="endEventBtn" class="btn danger">Active हटाएँ</button>
+          <button id="endEventBtn" class="btn danger">इवेंट Deactivate</button>
         </div>
       </div>
-      <div style="margin-top:6px;color:#666">वर्तमान Active: <b id="activeEventLabel">—</b></div>
+      <div class="notice">वर्तमान Active: <b id="activeEventLabel">—</b>. इवेंट Deactivate करने पर डिफ़ॉल्ट फॉर्म उपयोग होगा (सामान्य ऑफिस विज़िट).</div>
     </div>
 
     <!-- Table -->
-    <div style="border:1px solid #eee;border-radius:10px;overflow:auto;margin-top:12px">
+    <div class="table-wrap">
       <table id="dataTable">
         <thead>
           <tr>
-            <th>समय</th><th>नाम</th><th>मोबाइल</th><th>पद</th><th>मंडल</th><th>कारण</th><th>पता</th><th>सेल्फी</th>
+            <th>समय</th><th>नाम</th><th>मोबाइल</th><th>पद</th><th>मंडल</th><th>कारण</th><th>इवेंट</th><th>पता</th><th>फोटो</th>
           </tr>
         </thead>
         <tbody></tbody>
@@ -79,7 +124,7 @@
       <div id="emptyState" class="empty" style="display:none">कोई डेटा नहीं मिला…</div>
     </div>
 
-    <!-- Pagination -->
+    <!-- Pagination / Export / Load older -->
     <div class="foot">
       <div style="display:flex; gap:8px; align-items:center">
         <button id="firstPage" class="btn">⏮</button>
@@ -89,20 +134,31 @@
         <button id="lastPage" class="btn">⏭</button>
         <span id="rowInfo" style="color:#666">(0–0 of 0)</span>
       </div>
-      <div style="display:flex; gap:8px; align-items:center">
+      <div style="display:flex; gap:8px; align-items:center;flex-wrap:wrap">
+        <button id="loadOlderBtn" class="btn ghost">⬇️ पुराने रिकॉर्ड लोड करें</button>
         <button id="exportBtn" class="btn">Export CSV</button>
       </div>
     </div>
 
-    <!-- Analytics (simple) -->
+    <!-- Analytics -->
     <div class="cards">
       <div class="card">
-        <h3 style="margin:0 0 8px">Top Visitors (by visits)</h3>
+        <h3>फ़्रीक्वेंसी सारांश</h3>
         <div id="analyticsTopVisitors"></div>
+        <div id="analyticsFreq"></div>
       </div>
       <div class="card">
-        <h3 style="margin:0 0 8px">Event Summary</h3>
-        <div id="analyticsEventSummary"></div>
+        <h3>माह‑वाइज / डेट‑वाइज काउंट</h3>
+        <div class="grid2">
+          <div>
+            <label>माह चुनें</label>
+            <input type="month" id="monthPicker">
+            <div id="monthSummary" style="margin-top:8px"></div>
+          </div>
+          <div>
+            <div id="dateWiseTable"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -121,7 +177,7 @@
   const $ = (id)=>document.getElementById(id);
   const REASONS = [
     "कार्यालय पर बैठक","जिला अध्यक्ष से भेंट",
-    "ट्रांसफर / शासकीय कार्य / शिकायत","कार्यालय पर सामान्य उपस्थिति","अन्य कोई कार्य"
+    "트्रांसफर / शासकीय कार्य / शिकायत","कार्यालय पर सामान्य उपस्थिति","अन्य कोई कार्य"
   ];
   const MANDALS = [
     "भेंसोदा","भानपुरा","गरोठ","मेलखेडा","खड़ावदा","शामगढ़","सुवासरा","बसाई",
@@ -131,12 +187,14 @@
   ];
 
   const state = {
-    all: [], // all visitors loaded
+    all: [],           // all visitors loaded
+    lastDoc: null,     // for loading older pages
     page: 1,
     pageSize: 25,
     filtered: [],
     events: [],
-    activeEvent: null
+    activeEvent: null,
+    viewType: "",      // "", "office", "event"
   };
 
   // =============== UI Helpers ===============
@@ -156,16 +214,31 @@
     });
   }
 
+  function textCell(v){ return v ? String(v) : ''; }
+
   function applyFilter(){
     const q = ($('searchInput').value || '').toLowerCase().trim();
     const fr = $('fromDate').value; const to = $('toDate').value;
     const rs = $('reasonSelect').value; const md = $('mandalSelect').value;
+    const ev = $('eventSelect').value;
+    const fq = $('freqSelect').value; // more / less
+    const type = state.viewType;
 
     let rows = [...state.all];
+
+    // viewType segregations
+    if (type === 'office'){
+      rows = rows.filter(r => (r.type || r.category || 'office') === 'office' || (r.reason||'').includes('कार्यालय'));
+    } else if (type === 'event'){
+      rows = rows.filter(r => (r.type || r.category) === 'event' || r.eventId || r.eventName);
+    }
+
     if (fr) { const s = new Date(fr + 'T00:00:00'); rows = rows.filter(r => r.timestamp?.toDate ? r.timestamp.toDate() >= s : true); }
     if (to) { const e = new Date(to + 'T23:59:59'); rows = rows.filter(r => r.timestamp?.toDate ? r.timestamp.toDate() <= e : true); }
     if (rs) rows = rows.filter(r => (r.reason || '') === rs);
     if (md) rows = rows.filter(r => (r.mandal || '') === md);
+    if (ev) rows = rows.filter(r => (r.eventId || r.eventName || '') === ev);
+
     if (q) {
       rows = rows.filter(r => {
         const blob = `${r.name||''} ${r.mobile||''} ${r.address||''} ${r.designation||''}`.toLowerCase();
@@ -173,10 +246,27 @@
       });
     }
 
+    // Frequency filter
+    if (fq){
+      const countByKey = new Map();
+      rows.forEach(r => {
+        const k = `${r.mobile||''}|${r.name||''}`;
+        countByKey.set(k, (countByKey.get(k)||0)+1);
+      });
+      rows = rows.filter(r => {
+        const k = `${r.mobile||''}|${r.name||''}`;
+        const c = countByKey.get(k)||0;
+        if (fq==='more') return c >= 3;
+        if (fq==='less') return c <= 1;
+        return true;
+      });
+    }
+
     state.filtered = rows;
     state.page = 1;
     renderTable();
     renderAnalytics();
+    renderMonthBreakdown();
   }
 
   function renderTable(){
@@ -195,15 +285,17 @@
       $('emptyState').style.display = 'none';
       slice.forEach(row=>{
         const tr = document.createElement('tr');
+        const evName = row.eventName || row.eventId || '';
         tr.innerHTML = `
           <td>${tsToLocal(row.timestamp)}</td>
-          <td>${row.name||''}</td>
-          <td>${row.mobile||''}</td>
-          <td>${row.designation||''}</td>
-          <td>${row.mandal||''}</td>
-          <td>${row.reason||''}</td>
-          <td>${row.address||''}</td>
-          <td>${row.selfie ? `<a href="${row.selfie}" target="_blank">फोटो</a>` : ''}</td>`;
+          <td>${textCell(row.name)}</td>
+          <td>${textCell(row.mobile)}</td>
+          <td>${textCell(row.designation)}</td>
+          <td>${textCell(row.mandal)}</td>
+          <td>${textCell(row.reason)}</td>
+          <td>${textCell(evName)}</td>
+          <td>${textCell(row.address)}</td>
+          <td>${row.selfie ? `<a href="${row.selfie}" target="_blank"><img class="preview" src="${row.selfie}" alt="फोटो"></a>` : ''}</td>`;
         tbody.appendChild(tr);
       });
     }
@@ -223,17 +315,90 @@
     });
     const arr = [...map.entries()].map(([k,c])=>{
       const [n,m] = k.split('|'); return { name:n||'(अनाम)', mobile:m||'', count:c };
-    }).sort((a,b)=>b.count-a.count).slice(0,10);
-    $('analyticsTopVisitors').innerHTML = arr.length
-      ? `<ol>${arr.map(x=>`<li>${x.name} (${x.mobile}) — <b>${x.count}</b></li>`).join('')}</ol>` : '—';
+    }).sort((a,b)=>b.count-a.count);
 
-    // Event Summary (count by reason names that match event names present)
-    $('analyticsEventSummary').innerHTML = 'कुल पंक्तियाँ: <b>'+state.filtered.length+'</b>';
+    $('analyticsTopVisitors').innerHTML = arr.length
+      ? `<ol>${arr.slice(0,10).map(x=>`<li>${x.name} (${x.mobile}) — <b>${x.count}</b></li>`).join('')}</ol>`
+      : '—';
+
+    // Frequency quick stats
+    const more = arr.filter(x=>x.count>=3).length;
+    const less = arr.filter(x=>x.count<=1).length;
+    $('analyticsFreq').innerHTML = `
+      <div style="margin-top:6px;color:#444">
+        कुल पंक्तियाँ: <b>${state.filtered.length}</b> •
+        अधिक बार (≥3): <b>${more}</b> आगंतुक •
+        कम बार (≤1): <b>${less}</b> आगंतुक
+      </div>`;
+  }
+
+  // Month/date breakdown and max‑day
+  function renderMonthBreakdown(){
+    const mp = $('monthPicker').value;
+    const list = state.filtered.filter(r=>{
+      if (!mp) return true;
+      const d = r.timestamp?.toDate ? r.timestamp.toDate() : null;
+      if (!d) return false;
+      const ym = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+      return ym===mp;
+    });
+
+    const byDate = new Map();
+    list.forEach(r=>{
+      const d = r.timestamp?.toDate ? r.timestamp.toDate() : null;
+      if(!d) return;
+      const key = d.toISOString().slice(0,10);
+      byDate.set(key, (byDate.get(key)||0)+1);
+    });
+
+    // Highest date
+    let maxDate = null, maxCount = 0;
+    for(const [k,v] of byDate.entries()){ if (v>maxCount){ maxDate=k; maxCount=v; } }
+
+    $('monthSummary').innerHTML = `
+      <div>रिकॉर्ड: <b>${list.length}</b></div>
+      ${maxDate?`<div>सबसे अधिक विज़िटर: <b>${maxDate}</b> को <b>${maxCount}</b></div>`:''}
+    `;
+
+    // Small table
+    const rows = [...byDate.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+    const html = rows.length
+      ? `<table style="width:100%;border-collapse:collapse">
+           <thead><tr><th style="text-align:left;padding:6px;border-bottom:1px solid #eee">तारीख</th><th style="text-align:left;padding:6px;border-bottom:1px solid #eee">कुल</th></tr></thead>
+           <tbody>${rows.map(([d,c])=>`<tr><td style="padding:6px;border-bottom:1px solid #f5f5f5">${d}</td><td style="padding:6px;border-bottom:1px solid #f5f5f5">${c}</td></tr>`).join('')}</tbody>
+         </table>`
+      : '—';
+    $('dateWiseTable').innerHTML = html;
   }
 
   function loadStaticFilters(){
     fillSelect($('reasonSelect'), REASONS, '— सभी —');
     fillSelect($('mandalSelect'), MANDALS, '— सभी —');
+  }
+
+  function renderEventsDropDowns(){
+    // visitor filter dropdown (eventSelect) uses event id/name
+    const sel = $('eventSelect');
+    sel.innerHTML = '<option value="">— सभी —</option>';
+    state.events.forEach(ev => {
+      const op = document.createElement('option');
+      op.value = ev.id || ev.name;
+      op.textContent = ev.name + (ev.active ? ' (Active)' : '');
+      sel.appendChild(op);
+    });
+
+    // active select in manager
+    const select = $('eventActiveSelect');
+    select.innerHTML = '';
+    const opt0 = document.createElement('option'); opt0.value = ''; opt0.textContent = '— इवेंट चुनें —';
+    select.appendChild(opt0);
+    state.events.forEach(ev=>{
+      const op = document.createElement('option');
+      op.value = ev.id; op.textContent = ev.name + (ev.active ? ' (Active)' : '');
+      select.appendChild(op);
+    });
+    const active = state.events.find(e => e.active);
+    $('activeEventLabel').textContent = active ? active.name : '—';
   }
 
   // =============== Events Management ===============
@@ -249,43 +414,70 @@
     all.forEach(d => batch.update(d.ref, { active:false }));
     await batch.commit();
   }
-  function renderEvents(){
-    const select = $('eventActiveSelect');
-    select.innerHTML = '';
-    const opt0 = document.createElement('option'); opt0.value = ''; opt0.textContent = '— इवेंट चुनें —';
-    select.appendChild(opt0);
-    state.events.forEach(ev=>{
-      const op = document.createElement('option');
-      op.value = ev.id; op.textContent = ev.name + (ev.active ? ' (Active)' : '');
-      select.appendChild(op);
-    });
-    const active = state.events.find(e => e.active);
-    $('activeEventLabel').textContent = active ? active.name : '—';
-  }
 
-  // =============== Wiring ===============
-  // live visitors
-  db.collection("visitors").orderBy("timestamp","desc").limit(2000)
+  // =============== Data Loading ===============
+  // Live latest (for real‑time updates)
+  db.collection("visitors").orderBy("timestamp","desc").limit(500)
     .onSnapshot((snap) => {
-      state.all = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const latest = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      // merge latest into state.all (dedupe by id)
+      const map = new Map(state.all.map(r=>[r.id,r]));
+      latest.forEach(r=>map.set(r.id,r));
+      state.all = [...map.values()].sort((a,b)=> (b.timestamp?.toMillis?.()||0) - (a.timestamp?.toMillis?.()||0));
+      if (latest.length) state.lastDoc = snap.docs[snap.docs.length-1]; // for loading older beyond these
       applyFilter();
     });
+
+  // Load older pages on demand (so "पुराने सारे रिकॉर्ड")
+  $('loadOlderBtn').addEventListener('click', async ()=>{
+    try{
+      const q = db.collection("visitors").orderBy("timestamp","desc").startAfter(state.lastDoc||null).limit(1000);
+      const snap = await q.get();
+      const older = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      state.lastDoc = snap.docs[snap.docs.length-1] || state.lastDoc;
+      // append (dedupe)
+      const map = new Map(state.all.map(r=>[r.id,r]));
+      older.forEach(r=>map.set(r.id,r));
+      state.all = [...map.values()].sort((a,b)=> (b.timestamp?.toMillis?.()||0) - (a.timestamp?.toMillis?.()||0));
+      applyFilter();
+      if (!older.length){
+        Swal.fire('रिकॉर्ड पूर्ण', 'और पुराने रिकॉर्ड उपलब्ध नहीं हैं।', 'info');
+      }
+    }catch(err){
+      console.error(err);
+      Swal.fire('Error', 'पुराने रिकॉर्ड लाने में समस्या आई।', 'error');
+    }
+  });
 
   // live events
   db.collection('events').orderBy('createdAt','desc').onSnapshot(s=>{
     state.events = s.docs.map(d=>({ id: d.id, ...d.data() }));
-    renderEvents();
+    renderEventsDropDowns();
   });
+
+  // =============== Actions ===============
+  // chips for view type
+  document.querySelectorAll('.chip').forEach(el=>el.addEventListener('click',()=>{
+    document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    el.classList.add('active');
+    state.viewType = el.dataset.type || '';
+    $('activeTypeBadge').textContent = 'व्यू: ' + (state.viewType===''?'सभी':(state.viewType==='office'?'भाजपा कार्यालय':'इवेंट'));
+    applyFilter();
+  }));
 
   // filters & actions
   $('fromDate').addEventListener('change', applyFilter);
   $('toDate').addEventListener('change', applyFilter);
   $('reasonSelect').addEventListener('change', applyFilter);
   $('mandalSelect').addEventListener('change', applyFilter);
+  $('eventSelect').addEventListener('change', applyFilter);
+  $('freqSelect').addEventListener('change', applyFilter);
   $('searchInput').addEventListener('input', applyFilter);
   $('clearBtn').addEventListener('click', ()=>{
     $('fromDate').value=''; $('toDate').value=''; $('reasonSelect').value='';
-    $('mandalSelect').value=''; $('searchInput').value=''; applyFilter();
+    $('mandalSelect').value=''; $('eventSelect').value=''; $('freqSelect').value='';
+    $('searchInput').value=''; document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+    document.querySelector('[data-type=""]').classList.add('active'); state.viewType=''; $('activeTypeBadge').textContent='व्यू: सभी'; applyFilter();
   });
 
   // events actions
@@ -303,7 +495,7 @@
   });
   $('endEventBtn').addEventListener('click', async ()=>{
     await clearActive();
-    Swal.fire('Done', 'Active इवेंट हटाया गया', 'success');
+    Swal.fire('Done', 'Active इवेंट हटाया गया — डिफ़ॉल्ट फॉर्म सक्रिय।', 'success');
   });
 
   // pagination
@@ -323,12 +515,12 @@
     const rows = state.filtered.map(r=>({
       timestamp: tsToLocal(r.timestamp), name: r.name||'', mobile: r.mobile||'',
       designation: r.designation||'', mandal: r.mandal||'', reason: r.reason||'',
-      address: r.address||'', selfie: r.selfie||''
+      event: (r.eventName||r.eventId||''), address: r.address||'', selfie: r.selfie||''
     }));
-    const headers = Object.keys(rows[0] || {timestamp:'',name:'',mobile:'',designation:'',mandal:'',reason:'',address:'',selfie:''});
+    const headers = Object.keys(rows[0] || {timestamp:'',name:'',mobile:'',designation:'',mandal:'',reason:'',event:'',address:'',selfie:''});
     const csv = [headers.join(',')].concat(
       rows.map(r=>headers.map(h=>`"${String(r[h]||'').replace(/"/g,'""')}"`).join(','))
-    ).join('\n');
+    ).join('\\n');
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a'); a.href = url; a.download = 'visitors_export.csv'; a.click();
@@ -338,6 +530,13 @@
   // init static filters
   fillSelect($('reasonSelect'), REASONS, '— सभी —');
   fillSelect($('mandalSelect'), MANDALS, '— सभी —');
+
+  // month picker default = current month
+  (function initMonth(){
+    const d=new Date();
+    $('monthPicker').value = d.toISOString().slice(0,7);
+  })();
+  $('monthPicker').addEventListener('change', renderMonthBreakdown);
 </script>
 </body>
 </html>
