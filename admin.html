@@ -3,126 +3,168 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Admin Dashboard • BJP Office</title>
+  <title>Super Admin • BJP Office</title>
   
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-
+  
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { background: #f4f6f8; font-family: 'Noto Sans Devanagari', sans-serif; }
+    body { background: #f0f2f5; font-family: 'Noto Sans Devanagari', sans-serif; padding-bottom: 50px; }
     
+    /* Header */
     .header {
       background: linear-gradient(135deg, #ff6a00, #d35400);
       color: white; padding: 15px 20px;
       display: flex; justify-content: space-between; align-items: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
       position: sticky; top: 0; z-index: 100;
     }
-    
-    .container { padding: 20px; max-width: 1200px; margin: 0 auto; }
-    
-    /* Search & Filter Bar */
-    .controls {
-      display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap;
+    .header h2 { font-size: 1.4rem; margin: 0; }
+    .header-btns { display: flex; gap: 10px; }
+    .btn {
+      border: none; padding: 8px 14px; border-radius: 6px; font-weight: bold; cursor: pointer;
+      display: flex; align-items: center; gap: 5px; font-size: 14px;
+    }
+    .btn-white { background: white; color: #d35400; }
+    .btn-event { background: #333; color: #fff; }
+
+    .container { padding: 20px; max-width: 1400px; margin: 0 auto; }
+
+    /* CHARTS SECTION */
+    .stats-row {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px; margin-bottom: 25px;
+    }
+    .stat-card {
+      background: white; padding: 15px; border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .stat-card h3 { font-size: 16px; color: #555; margin-bottom: 10px; width: 100%; text-align: left; border-bottom: 1px solid #eee; padding-bottom: 5px;}
+    canvas { max-height: 200px; width: 100%; }
+
+    /* FILTERS */
+    .filters-box {
+      background: white; padding: 15px; border-radius: 10px; margin-bottom: 20px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      display: flex; gap: 10px; flex-wrap: wrap; align-items: center;
     }
     .search-input {
-      flex: 2; padding: 12px; border: 1px solid #ddd; border-radius: 8px;
-      font-size: 16px; outline: none; min-width: 200px;
+      flex: 2; padding: 10px; border: 1px solid #ccc; border-radius: 6px; min-width: 200px;
     }
     .filter-select {
-      flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 8px;
-      font-size: 16px; outline: none; background: white; min-width: 150px; cursor: pointer;
+      flex: 1; padding: 10px; border: 1px solid #ccc; border-radius: 6px; min-width: 140px; background: #fff;
+    }
+    .count-badge {
+      background: #333; color: white; padding: 5px 12px; border-radius: 20px; font-size: 14px; font-weight: bold;
     }
 
+    /* DATA GRID */
     .data-grid {
-      display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 15px;
     }
-
     .card {
       background: white; border-radius: 10px; overflow: hidden;
       box-shadow: 0 2px 5px rgba(0,0,0,0.05);
       border-left: 5px solid #ff6a00;
-      transition: transform 0.2s;
+      transition: all 0.2s; position: relative;
     }
-    .card:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
     
     .card-header {
-      padding: 10px 15px; background: #fff5eb;
-      display: flex; justify-content: space-between; align-items: center;
-      border-bottom: 1px solid #eee; font-size: 14px;
+      padding: 10px 15px; background: #fff5eb; border-bottom: 1px solid #eee;
+      display: flex; justify-content: space-between; font-size: 13px; color: #666;
     }
     .card-body { padding: 15px; display: flex; gap: 15px; }
-    
     .user-img {
-      width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
+      width: 70px; height: 70px; border-radius: 50%; object-fit: cover;
       border: 2px solid #ffcf99; background: #eee; cursor: pointer;
     }
-    .info { flex: 1; }
-    .info h3 { font-size: 18px; color: #333; margin-bottom: 5px; }
-    .info p { font-size: 14px; color: #666; margin-bottom: 3px; }
+    .info h3 { margin: 0 0 5px; font-size: 18px; color: #333; }
+    .info p { margin: 2px 0; font-size: 14px; color: #555; }
     
-    .badges { margin-top: 8px; display: flex; gap: 5px; flex-wrap: wrap; }
-    .tag { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; }
-    .tag-dist { background: #e3f2fd; color: #1565c0; } /* Blue for District */
-    .tag-mandal { background: #fff3e0; color: #e65100; } /* Orange for Mandal */
-    .tag-reason { background: #fce4ec; color: #c2185b; } /* Pink for Reason */
+    .tags { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; }
+    .tag { font-size: 11px; padding: 3px 8px; border-radius: 4px; font-weight: bold; }
+    .tag-dist { background: #e3f2fd; color: #1565c0; }
+    .tag-mandal { background: #fff3e0; color: #e65100; }
+    .tag-reason { background: #f3e5f5; color: #7b1fa2; }
 
-    .actions { padding: 10px 15px; border-top: 1px solid #eee; text-align: right; }
+    .actions {
+      padding: 10px; border-top: 1px solid #eee; text-align: right;
+    }
     .btn-del {
-      background: #ffebee; color: #c62828; border: none; padding: 5px 10px;
-      border-radius: 5px; cursor: pointer; font-size: 13px;
+      background: #ffebee; color: #c62828; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;
     }
-    .loader { text-align: center; padding: 50px; color: #777; }
-    .stats {
-      position: fixed; bottom: 20px; right: 20px;
-      background: #333; color: white; padding: 10px 20px;
-      border-radius: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-weight: bold;
-    }
+    
+    #loader { text-align: center; margin-top: 50px; font-size: 18px; color: #666; }
   </style>
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
 <div class="header">
-  <h2>🚩 व्यवस्थापक पैनल (Admin)</h2>
-  <button onclick="exportData()" style="background:white; color:#ff6a00; border:none; padding:8px 12px; border-radius:6px; font-weight:bold; cursor:pointer;">
-    <i class="fas fa-file-excel"></i> Export Excel
-  </button>
+  <h2>🚩 व्यवस्थापक (Admin)</h2>
+  <div class="header-btns">
+    <button class="btn btn-event" onclick="manageEvent()">
+      <i class="fas fa-calendar-check"></i> इवेंट सेट करें
+    </button>
+    <button class="btn btn-white" onclick="exportData()">
+      <i class="fas fa-file-excel"></i> Excel
+    </button>
+  </div>
 </div>
 
 <div class="container">
-  <div class="controls">
-    <input type="text" id="searchInput" class="search-input" placeholder="🔍 नाम, मोबाइल या मंडल खोजें..." onkeyup="filterCards()">
-    
-    <select id="districtFilter" class="filter-select" onchange="filterCards()">
-      <option value="">All Districts (सभी जिले)</option>
-      <option value="Mandsaur">Mandsaur (मंदसौर)</option>
-      <option value="Ratlam">Ratlam (रतलाम)</option>
-      <option value="Nimach">Nimach (नीमच)</option>
-      <option value="Other">Other (अन्य)</option>
-    </select>
+  
+  <div class="stats-row">
+    <div class="stat-card">
+      <h3>📊 जिलेवार आगंतुक (District Stats)</h3>
+      <canvas id="districtChart"></canvas>
+    </div>
+    <div class="stat-card">
+      <h3>🎯 कारण (Purpose Stats)</h3>
+      <canvas id="reasonChart"></canvas>
+    </div>
   </div>
 
-  <div id="loader" class="loader">Loading data...</div>
+  <div class="filters-box">
+    <input type="text" id="search" class="search-input" placeholder="🔍 नाम या मोबाइल खोजें..." onkeyup="applyFilters()">
+    
+    <select id="filterDist" class="filter-select" onchange="applyFilters()">
+      <option value="">सभी जिले</option>
+    </select>
+
+    <select id="filterMandal" class="filter-select" onchange="applyFilters()">
+      <option value="">सभी मंडल</option>
+    </select>
+
+    <select id="filterReason" class="filter-select" onchange="applyFilters()">
+      <option value="">सभी कारण</option>
+    </select>
+    
+    <span class="count-badge" id="totalCount">Total: 0</span>
+  </div>
+
+  <div id="loader">Loading Live Data...</div>
   <div id="grid" class="data-grid"></div>
 </div>
-
-<div class="stats" id="totalCount">Total: 0</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-  // 1. PASSWORD GUARD
+  // --- AUTH ---
   const pass = prompt("Enter Admin Password:");
   if(pass !== "bjp123") { 
-    document.body.innerHTML = "<h2 style='text-align:center;margin-top:50px;color:red;'>Access Denied ❌</h2>";
-    throw new Error("Wrong Password");
+    document.body.innerHTML = "<h2 style='text-align:center;color:red;margin-top:50px;'>Access Denied</h2>";
+    throw "Access Denied"; 
   }
 
-  // 2. FIREBASE CONFIG
+  // --- CONFIG ---
   const firebaseConfig = {
     apiKey: "AIzaSyD-xaGtrczkUCT7rwEOuRnHzVE9AohYsKU",
     authDomain: "bjplivefirebase.firebaseapp.com",
@@ -135,116 +177,200 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  const grid = document.getElementById('grid');
-  const loader = document.getElementById('loader');
+  // --- VARIABLES ---
   let allData = [];
+  let distChartInst = null;
+  let reasonChartInst = null;
 
-  // 3. FETCH DATA
-  db.collection("visitors").orderBy("timestamp", "desc").limit(200)
-    .onSnapshot((snapshot) => {
-      loader.style.display = 'none';
+  // --- LOAD DATA ---
+  db.collection("visitors").orderBy("timestamp", "desc").limit(300)
+    .onSnapshot(snap => {
+      document.getElementById('loader').style.display = 'none';
       allData = [];
-      grid.innerHTML = ""; 
-
-      snapshot.forEach(doc => {
+      snap.forEach(doc => {
         let d = doc.data();
         d.id = doc.id;
-        // Ensure district field exists for filtering
-        d.district = d.district || (d.District) || "Unknown"; 
+        // Normalize fields for older data
+        d.district = d.district || d.District || "Unknown";
+        d.mandal = d.mandal || d.Mandal || "";
+        d.reason = d.reason || d.Reason || "";
         allData.push(d);
-        renderCard(d);
       });
-      document.getElementById('totalCount').innerText = `Total: ${snapshot.size}`;
-      filterCards(); // Re-apply filters if data updates
-    }, (error) => { console.error(error); loader.innerHTML = "Error loading."; });
+      
+      populateDropdowns(); // Dynamic filters populate karega
+      applyFilters();      // Data render karega
+    });
 
-  // 4. RENDER CARD
-  function renderCard(d) {
-    const time = d.timestamp ? new Date(d.timestamp.seconds * 1000).toLocaleString('hi-IN') : 'Just now';
-    const imgUrl = d.selfie || 'https://via.placeholder.com/150?text=No+Img';
-    
-    // Create card with data-district attribute for easy filtering
-    const card = document.createElement('div');
-    card.className = 'card searchable';
-    card.setAttribute('data-district', d.district); 
+  // --- RENDER & FILTER ---
+  function applyFilters() {
+    const txt = document.getElementById('search').value.toLowerCase();
+    const fDist = document.getElementById('filterDist').value;
+    const fMandal = document.getElementById('filterMandal').value;
+    const fReason = document.getElementById('filterReason').value;
 
-    card.innerHTML = `
-      <div class="card-header">
-        <span style="color:#777;">🕒 ${time}</span>
-      </div>
-      <div class="card-body">
-        <img src="${imgUrl}" class="user-img" onclick="viewImage('${imgUrl}', '${d.name}')">
-        <div class="info">
-          <h3>${d.name}</h3>
-          <p>📞 <a href="tel:${d.mobile}" style="text-decoration:none;color:#555;">${d.mobile}</a></p>
-          <p>👨‍💼 ${d.designation}</p>
-          <p>📍 ${d.address}</p>
-          
-          <div class="badges">
-            <span class="tag tag-dist">${d.district}</span>
-            <span class="tag tag-mandal">${d.mandal}</span>
-            <span class="tag tag-reason">${d.reason}</span>
+    const filtered = allData.filter(d => {
+      const matchTxt = (d.name+d.mobile).toLowerCase().includes(txt);
+      const matchDist = fDist === "" || d.district === fDist;
+      const matchMandal = fMandal === "" || d.mandal === fMandal;
+      const matchReason = fReason === "" || d.reason === fReason;
+      return matchTxt && matchDist && matchMandal && matchReason;
+    });
+
+    renderGrid(filtered);
+    updateCharts(filtered);
+    document.getElementById('totalCount').innerText = `Total: ${filtered.length}`;
+  }
+
+  function renderGrid(data) {
+    const grid = document.getElementById('grid');
+    grid.innerHTML = "";
+    data.forEach(d => {
+      const time = d.timestamp ? new Date(d.timestamp.seconds*1000).toLocaleString('hi-IN') : '';
+      const img = d.selfie || 'https://via.placeholder.com/100?text=No+Img';
+      
+      const div = document.createElement('div');
+      div.className = 'card';
+      div.innerHTML = `
+        <div class="card-header"><span>${time}</span></div>
+        <div class="card-body">
+          <img src="${img}" class="user-img" onclick="viewImg('${img}','${d.name}')">
+          <div class="info">
+            <h3>${d.name}</h3>
+            <p>📞 <a href="tel:${d.mobile}" style="color:#555;text-decoration:none;">${d.mobile}</a></p>
+            <p>👨‍💼 ${d.designation}</p>
+            <p>📍 ${d.address}</p>
+            <div class="tags">
+              <span class="tag tag-dist">${d.district}</span>
+              <span class="tag tag-mandal">${d.mandal}</span>
+              <span class="tag tag-reason">${d.reason}</span>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="actions">
-        <button class="btn-del" onclick="deleteEntry('${d.id}')"><i class="fas fa-trash"></i> Delete</button>
-      </div>
-    `;
-    grid.appendChild(card);
+        <div class="actions">
+          <button class="btn-del" onclick="delEntry('${d.id}')">🗑️ Delete</button>
+        </div>
+      `;
+      grid.appendChild(div);
+    });
   }
 
-  // 5. FILTER LOGIC (Text + District)
-  window.filterCards = () => {
-    const textSearch = document.getElementById('searchInput').value.toLowerCase();
-    const distFilter = document.getElementById('districtFilter').value;
-    const cards = document.getElementsByClassName('searchable');
+  // --- SMART DROPDOWNS ---
+  function populateDropdowns() {
+    // Jo data aaya hai, usme se unique Districts, Mandals nikal kar dropdown me daalega
+    const dists = new Set();
+    const mandals = new Set();
+    const reasons = new Set();
+
+    allData.forEach(d => {
+      if(d.district) dists.add(d.district);
+      if(d.mandal) mandals.add(d.mandal);
+      if(d.reason) reasons.add(d.reason);
+    });
+
+    fillSelect('filterDist', dists);
+    fillSelect('filterMandal', mandals);
+    fillSelect('filterReason', reasons);
+  }
+
+  function fillSelect(id, set) {
+    const sel = document.getElementById(id);
+    const currentVal = sel.value; // Selection preserve karne ke liye
+    // Keep first option (Select All)
+    sel.innerHTML = sel.options[0].outerHTML; 
+    Array.from(set).sort().forEach(v => {
+      const op = document.createElement('option');
+      op.value = v; op.textContent = v;
+      sel.appendChild(op);
+    });
+    sel.value = currentVal;
+  }
+
+  // --- INFOGRAPHICS (Charts) ---
+  function updateCharts(data) {
+    // 1. District Stats
+    const distCounts = {};
+    data.forEach(d => distCounts[d.district] = (distCounts[d.district]||0)+1 );
     
-    let visibleCount = 0;
+    // 2. Reason Stats
+    const reasonCounts = {};
+    data.forEach(d => reasonCounts[d.reason] = (reasonCounts[d.reason]||0)+1 );
 
-    Array.from(cards).forEach(card => {
-      const cardText = card.innerText.toLowerCase();
-      const cardDist = card.getAttribute('data-district');
+    renderChart('districtChart', distCounts, 'bar', distChartInst, (i)=>distChartInst=i);
+    renderChart('reasonChart', reasonCounts, 'pie', reasonChartInst, (i)=>reasonChartInst=i);
+  }
 
-      // Logic: Both conditions must be true
-      const matchText = cardText.includes(textSearch);
-      // If filter is empty (""), show all. Else match exact district.
-      // Also handle "Other" logic if needed, but usually exact match works best.
-      const matchDist = (distFilter === "") || (cardDist === distFilter);
+  function renderChart(canvasId, dataObj, type, instance, setInstance) {
+    if(instance) instance.destroy();
+    const ctx = document.getElementById(canvasId).getContext('2d');
+    const labels = Object.keys(dataObj);
+    const vals = Object.values(dataObj);
+    
+    setInstance(new Chart(ctx, {
+      type: type,
+      data: {
+        labels: labels,
+        datasets: [{
+          data: vals,
+          backgroundColor: ['#ff6a00', '#36a2eb', '#ffcd56', '#4bc0c0', '#9966ff', '#c9cbcf', '#ff9f40'],
+          borderWidth: 1
+        }]
+      },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    }));
+  }
 
-      if(matchText && matchDist) {
-        card.style.display = "block";
-        visibleCount++;
+  // --- EVENT MANAGEMENT ---
+  async function manageEvent() {
+    // Pehle current status check karte hain
+    const snap = await db.collection('events').where('active','==',true).get();
+    let currentEvent = "";
+    if(!snap.empty) currentEvent = snap.docs[0].data().name;
+
+    const { value: eventName } = await Swal.fire({
+      title: 'इवेंट सेटिंग्स',
+      input: 'text',
+      inputLabel: 'नया इवेंट नाम (खाली छोड़ें तो इवेंट बंद हो जाएगा)',
+      inputValue: currentEvent,
+      showCancelButton: true,
+      confirmButtonText: 'Save Event'
+    });
+
+    if (eventName !== undefined) {
+      // 1. Purane sab active events band karo
+      const old = await db.collection('events').where('active','==',true).get();
+      const batch = db.batch();
+      old.forEach(doc => batch.update(doc.ref, { active: false }));
+      
+      // 2. Naya chalu karo (agar naam diya hai)
+      if(eventName.trim()) {
+        const newRef = db.collection('events').doc();
+        batch.set(newRef, { name: eventName, active: true, timestamp: firebase.firestore.FieldValue.serverTimestamp() });
+        Swal.fire("Event Active", `Current Event: ${eventName}`, "success");
       } else {
-        card.style.display = "none";
+        Swal.fire("Event Stopped", "Normal Mode Active", "info");
       }
-    });
-    
-    document.getElementById('totalCount').innerText = `Total: ${visibleCount}`;
+      await batch.commit();
+    }
   }
 
-  window.viewImage = (url, name) => {
-    Swal.fire({ title: name, imageUrl: url, imageWidth: 400, confirmButtonText: 'Close' });
-  }
-
-  window.deleteEntry = async (id) => {
-    const res = await Swal.fire({
-      title: 'Delete?', text: "Permanent delete!", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33'
-    });
-    if (res.isConfirmed) {
-      db.collection("visitors").doc(id).delete();
+  // --- ACTIONS ---
+  window.viewImg = (url, title) => Swal.fire({ imageUrl: url, title: title, confirmButtonText:'Close' });
+  
+  window.delEntry = async (id) => {
+    if((await Swal.fire({title:'Delete?',icon:'warning',showCancelButton:true})).isConfirmed){
+      db.collection('visitors').doc(id).delete();
     }
   }
 
   window.exportData = () => {
     let csv = "Name,Mobile,Designation,Address,District,Mandal,Reason,Time\n";
     allData.forEach(r => {
-      const t = r.timestamp ? new Date(r.timestamp.seconds * 1000).toLocaleString() : '';
-      csv += `"${r.name}","${r.mobile}","${r.designation}","${r.address}","${r.district}","${r.mandal}","${r.reason}","${t}"\n`;
+      const t = r.timestamp ? new Date(r.timestamp.seconds*1000).toLocaleString().replace(/,/g,'') : '';
+      csv += `${r.name},${r.mobile},${r.designation},${r.address},${r.district},${r.mandal},${r.reason},${t}\n`;
     });
     const link = document.createElement("a");
     link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
-    link.download = "visitors_data.csv";
+    link.download = "data.csv";
     document.body.appendChild(link);
     link.click();
   }
