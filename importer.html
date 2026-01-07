@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Visitors Importer (Relaxed Mode)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body{font-family:'Noto Sans Devanagari',sans-serif;background:#f6f6f6;padding:20px;}
+    .box{max-width:980px;margin:0 auto;background:#fff;padding:20px;border-radius:12px;box-shadow:0 6px 18px rgba(0,0,0,.08)}
+    h2{color:#ff6a00; margin-top:0;}
+    .row{display:flex;gap:15px;align-items:center;flex-wrap:wrap;margin:15px 0}
+    button{padding:10px 20px;border:0;border-radius:6px;background:#ff6a00;color:#fff;cursor:pointer;font-weight:bold;}
+    button:disabled{opacity:0.5;cursor:not-allowed;}
+    table{width:100%;border-collapse:collapse;margin-top:15px;font-size:13px;}
+    th,td{border:1px solid #ddd;padding:8px;text-align:left;}
+    thead{background:#333;color:#fff;}
+    .err{color:red;font-weight:bold;} .ok{color:green;}
+    .warn{color:#ff9800; font-weight:bold;}
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+  <div class="box">
+    <h2>📂 Visitors Importer (Relaxed)</h2>
+    <p style="color:#666;">
+        <b>Instruction:</b> Only <b>Name</b> and <b>Mobile</b> are mandatory. 
+        Missing fields (Address, Mandal, District) will be saved as empty and can be updated later.
+    </p>
+    
+    <div class="row">
+      <input type="file" id="file" accept=".csv" />
+      <button id="parseBtn">1. Preview Check</button>
+      <button id="importBtn" disabled>2. Start Import</button>
+    </div>
+    <div id="status"></div>
+    <table id="preview"><thead></thead><tbody></tbody></table>
+  </div>
+
+  <script>
+    // 1. CONFIG
+    const firebaseConfig = {
+      apiKey: "AIzaSyD-xaGtrczkUCT7rwEOuRnHzVE9AohYsKU",
+      authDomain: "bjplivefirebase.firebaseapp.com",
+      projectId: "bjplivefirebase"
+    };
+    if (!firebase.apps?.length) firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+
+    // 2. MAPPINGS
+    function mapRow(row){
+      const get = (keys) => {
+        for(let k of keys) if(row[k]) return row[k].trim();
+        return ""; // Return empty string if missing
+      }
+      return {
+        name: get(["Name","name","नाम"]),
+        mobile: (get(["Mobile","mobile","Phone","मोबाइल"])).replace(/\D/g,'').slice(-10),
+        designation: get(["Designation","designation","पद"]),
+        address: get(["Address","address","पता"]),
+        district: get(["District","district","Jila","Zila","जिला"]),
+        mandal: get(["Mandal","mandal","मंडल"]),
+        reason: get(["Reason","reason","Purpose","कारण"]) || "Old Data Import"
+      };
+    }
+
+    let parsedData = [];
+
+    // 3. PREVIEW
+    document.getElementById('parseBtn').addEventListener('click', ()=>{
+      const file = document.getElementById('file').files[0];
+      if(!file) return Swal.fire("File Missing","Please select a CSV file","error");
+
+      Papa.parse(file, {
+        header: true, skipEmptyLines: true,
+        complete: (res) => {
+          const tbody = document.querySelector('#preview tbody');
+          const thead = document.querySelector('#preview thead');
+          tbody.innerHTML = ""; 
+          thead.innerHTML = "<tr><th>Status</th><th>Name</th><th>Mobile</th><th>District</th><th>Mandal</th></tr>";
+          
+          parsedData = [];
+          let validCount = 0;
+
+          res.data.forEach(row => {
+            const d = mapRow(row);
+            const tr = document.createElement('tr');
+            let status = "<span class='ok'>OK</span>";
+            
+            // Only strictly check Name and Mobile
+            if(!d.name || d.mobile.length !== 10) {
+                status = "<span class='err'>Invalid (Name/Mobile Missing)</span>";
+            } else {
+                // If district is missing, show warning but allow it
+                if(!d.district) status = "<span class='warn'>Partial (No District)</span>";
+                
+                validCount++;
+                parsedData.push(d);
+            }
+
+            tr.innerHTML = `<td>${status}</td><td>${d.name}</td><td>${d.mobile}</td><td>${d.district}</td><td>${d.mandal}</td>`;
+            tbody.appendChild(tr);
+          });
+          
+          document.getElementById('status').innerHTML = `<b>${validCount}</b> rows ready to import.`;
+          document.getElementById('importBtn').disabled = (validCount === 0);
+        }
+      });
+    });
+
+    // 4. IMPORT
+    document.getElementById('importBtn').addEventListener('click', async ()=>{
+      const btn = document.getElementById('importBtn');
+      btn.disabled = true;
+      btn.innerText = "Importing...";
+      
+      let count = 0;
+      let skipped = 0;
+
+      for(let d of parsedData){
+        try {
+            // Check duplicate by mobile
+            const exists = await db.collection("visitors").where("mobile", "==", d.mobile).limit(1).get();
+            if(exists.empty){
+                await db.collection("visitors").add({
+                    ...d,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                count++;
+            } else {
+                skipped++;
+            }
+        } catch(e) { console.error(e); }
+      }
+      
+      Swal.fire("Success", `Imported: ${count}, Skipped (Duplicate): ${skipped}`, "success");
+      btn.innerText = "Done";
+      btn.disabled = false;
+    });
+  </script>
+</body>
+</html>
